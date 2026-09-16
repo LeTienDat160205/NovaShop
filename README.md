@@ -33,7 +33,7 @@
 5. Các tuyến đường được bảo vệ (protected routes) và bảng điều khiển quản trị (admin panels) sẽ xác thực mã JWT cùng các quyền tương ứng như `role` hoặc `canAccessAdmin`.
 
 ## Cấu trúc dự án
-
+```text
 NovaShop/
 ├── frontend/                   # ReactJS (Vite)
 │   ├── src/
@@ -64,3 +64,4 @@ NovaShop/
 │
 ├── docker-compose.yml          # Chạy MongoDB, Redis, Node, Python đồng thời
 └── README.md
+```
