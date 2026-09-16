@@ -1,0 +1,29 @@
+NovaShop/
+├── frontend/                   # ReactJS (CRA)
+│   ├── src/
+│   │   ├── components/         # ProductCard, RecommendationSlider, Header...
+│   │   ├── pages/              # Home, ProductDetail, Cart, Checkout...
+│   │   ├── services/           # API integration (Axios)
+│   │   └── store/              # State management (Redux Toolkit / Zustand)
+│   └── package.json
+│
+├── backend-node/               # NodeJS (ExpressJS)
+│   ├── src/
+│   │   ├── controllers/        # Auth, Product, Interaction, Recommendation
+│   │   ├── models/             # MongoDB Schemas (User, Product, Order, Interaction)
+│   │   ├── services/           # Business logic, Redis client
+│   │   ├── routes/             # API Endpoints
+│   │   └── utils/
+│   └── package.json
+│
+├── rec-engine-python/          # Python Recommendation Service
+│   ├── app/
+│   │   ├── main.py             # FastAPI entrypoint
+│   │   ├── algorithms/         # Collaborative filtering, Content-based algorithms
+│   │   ├── data/               # Connectors to Mongo & Redis
+│   │   └── models/             # Saved ML model artifacts (.pkl, .h5)
+│   ├── requirements.txt        # pandas, scikit-learn, fastapi, pymongo, redis
+│   └── train_cron.py           # Script chạy định kỳ huấn luyện mô hình
+│
+├── docker-compose.yml          # Chạy MongoDB, Redis, Node, Python đồng thời
+└── README.md
