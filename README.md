@@ -32,6 +32,13 @@
 4. Frontend điều hướng người dùng dựa trên ngữ cảnh thông qua logic `redirect` (ví dụ: quay lại giỏ hàng sau khi xác thực).
 5. Các tuyến đường được bảo vệ (protected routes) và bảng điều khiển quản trị (admin panels) sẽ xác thực mã JWT cùng các quyền tương ứng như `role` hoặc `canAccessAdmin`.
 
+## Frontend
+```bash
+cd frontend
+npm install 
+npm run dev
+```
+
 ## Cấu trúc dự án
 ```text
 NovaShop/
@@ -40,7 +47,7 @@ NovaShop/
 │   │   ├── components/         # ProductCard, RecommendationSlider, Header...
 │   │   ├── pages/              # Home, ProductDetail, Cart, Checkout...
 │   │   ├── services/           # API integration (Axios)
-│   │   └── store/              # State management (Redux Toolkit / Zustand)
+│   │   └── redux/              # State management (Redux Toolkit)
 │   └── package.json
 |   └── ... (File mặc định được tạo ra)
 │

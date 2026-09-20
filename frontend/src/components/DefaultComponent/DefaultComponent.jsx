@@ -1,5 +1,5 @@
 import React from 'react'
-import HeaderCompoment from '../HeaderCompoment/HeaderCompoment'
+import HeaderCompoment from '../HeaderComponent/HeaderComponent'
 
 const DefaultCompoment = ({ children })  => {
     return (

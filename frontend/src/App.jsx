@@ -1,8 +1,8 @@
 import React, { Fragment } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { routes } from './routes'
-import HeaderCompoment from './compoments/HeaderCompoment/HeaderCompoment'
-import DefaultCompoment from './compoments/DefaultCompoment/DefaultCompoment'
+import HeaderCompoment from './components/HeaderComponent/HeaderComponent'
+import DefaultCompoment from './components/DefaultComponent/DefaultComponent'
 function App() {
 
 
