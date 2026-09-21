@@ -1,5 +1,5 @@
 import React from "react";
-import { Col } from "antd";
+import { Badge, Col } from "antd";
 import Search from "antd/es/transfer/search";
 import { UserOutlined, CaretDownOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import { WrapperHeader, WrapperTextHeader, WrapperHeaderAccount, WrapperTextHeaderSmall } from "./style";
@@ -8,13 +8,14 @@ import ButtonInputSearch from "../ButtonInputSearch/ButtonInputSearch";
 const HeaderCompoment = () => {
   return (
     <div>
-      <WrapperHeader gutter={16}>
-        <Col span={6}>
+      <WrapperHeader>
+        <Col span={5}>
           <WrapperTextHeader>NovaShop</WrapperTextHeader>
         </Col>
-        <Col span={12}>
+        <Col span={13}>
           <ButtonInputSearch
             size= "large"
+            bordered={false}
             placeholder= "input search text" 
             textButton= "Tìm kiếm"
             // onSearch={onSearch}
@@ -33,7 +34,9 @@ const HeaderCompoment = () => {
           </WrapperHeaderAccount>
 
           <div>
-            <ShoppingCartOutlined style={{fontSize: '30px', color: '#fff'}}/>
+            <Badge count={4} size="small">
+              <ShoppingCartOutlined style={{fontSize: '30px', color: '#fff'}}/>
+            </Badge>
             <WrapperTextHeaderSmall>Giỏ hàng</WrapperTextHeaderSmall>
           </div>
         </Col>
