@@ -31,8 +31,20 @@ export const WrapperButtonMore = styled(ButtonComponent)`
 // `
 export const WrapperProducts = styled.div`
   display: grid;
-  grid-template-columns: repeat(7, 200px);
-  justify-content: space-between;
-  gap: 30px 0;
-  margin-top: 20px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+  }
+
+  @media (max-width: 800px) {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    gap: 12px;
+  }
 `;

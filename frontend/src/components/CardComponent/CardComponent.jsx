@@ -11,19 +11,18 @@ import {
 import { StarFilled } from "@ant-design/icons";
 import logo from "../../assets/images/logo.png";
 
-const CardComponent = () => {
+const CardComponent = ({ product }) => {
   return (
     <WrapperCardStyle
       hoverable
-      headStyle={{ width: "200px", height: "200px" }}
       variant="borderless"
-      style={{ width: 200 }}
+      style={{ width: "100%" }}
       bodyStyle={{ padding: "10px" }}
       cover={
         <img
           draggable={false}
-          alt="example"
-          src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png"
+          alt={product.name}
+          src={product.image}
         />
       }
     >
@@ -38,17 +37,20 @@ const CardComponent = () => {
           borderTopLeftRadius: "3px",
         }}
       />
-      <StyleNameProduct>Iphone</StyleNameProduct>
+
+      <StyleNameProduct>{product.name}</StyleNameProduct>
+
       <WrapperReportText>
         <span style={{ marginRight: "4px" }}>
-          <span>4.96</span>
+          <span>{product.rating}</span>
           <StarFilled style={{ fontSize: "12px", color: "orange" }} />
         </span>
-        <WrapperStyleTextSell>| Đã bán 987+</WrapperStyleTextSell>
+        <WrapperStyleTextSell>| Đã bán {product.sold}</WrapperStyleTextSell>
       </WrapperReportText>
+
       <WrapperPriceText>
-        <span style={{marginRight: '8px'}}>3.600.000đ</span>
-        <WrapperDiscountText>-20%</WrapperDiscountText>
+        <span style={{ marginRight: "8px" }}>{product.price}</span>
+        <WrapperDiscountText>{product.discount}</WrapperDiscountText>
       </WrapperPriceText>
     </WrapperCardStyle>
   );

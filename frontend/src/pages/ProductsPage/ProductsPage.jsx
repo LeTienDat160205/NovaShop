@@ -1,9 +1,8 @@
-import React from 'react'
+import React from "react";
+import TypeProductPage from "../TypeProductPage/TypeProductPage";
 
 const ProductsPage = () => {
-    return (
-        <div>ProductsPage</div>
-    )
-}
+  return <TypeProductPage />;
+};
 
-export default ProductsPage 
+export default ProductsPage;
