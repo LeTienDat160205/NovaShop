@@ -1,5 +1,5 @@
 import { Col, Flex, Image, Row } from "antd";
-import React from "react";
+import React, { useEffect } from "react";
 import imageProduct from "../../assets/images/test.webp";
 import imageSmall from "../../assets/images/imagesmall.webp";
 import {
@@ -15,9 +15,26 @@ import {
 } from "./style";
 import { MinusOutlined, PlusOutlined, StarFilled } from "@ant-design/icons";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
+import LikeButtonComponent from "../LikeButtonComponent/LikeButtonComponent";
+import CommentComponent from "../CommentComponent/CommentComponent";
 
 const ProductDetailsComponent = () => {
   const onChange = () => {};
+  useEffect(() => {
+    if (!document.getElementById("fb-root")) {
+      const facebookRoot = document.createElement("div");
+      facebookRoot.id = "fb-root";
+      document.body.prepend(facebookRoot);
+    }
+    if (document.getElementById("facebook-jssdk")) return;
+    const script = document.createElement("script");
+    script.id = "facebook-jssdk";
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = "anonymous";
+    script.src = "https://connect.facebook.net/vi_VN/sdk.js#xfbml=1&version=v19.0";
+    document.body.appendChild(script);
+  }, []);
   return (
     <Row style={{ padding: "16px", background: "#fff" , borderRadius: '4px'}}>
       <Col span={10} style={{borderRight: '1px solid #e5e5e5', paddingRight: '8px'}}>
@@ -86,6 +103,13 @@ const ProductDetailsComponent = () => {
           <span className="address">Đại học Công nghiệp Hà Nội</span>
           <span className="change-address"> - Đổi địa chỉ</span>
         </WrapperAddressProduct>
+        <LikeButtonComponent
+  dataHref={
+    import.meta.env.VITE_IS_LOCAL
+      ? "https://developers.facebook.com/docs/plugins/"
+      : window.location.href
+  }
+/>
         <div style={{margin: '10px 0 20px',padding: '10px 0', borderTop: '1px solid #e5e5e5', borderBottom: '1px solid #e5e5e5'}}>
           <div style={{marginBottom: '12px'}}>Số lượng</div>
           <WrapperQualityProduct>
@@ -130,6 +154,14 @@ const ProductDetailsComponent = () => {
             ></ButtonComponent>
         </div>
       </Col>
+      <CommentComponent
+  dataHref={
+    import.meta.env.VITE_IS_LOCAL
+      ? "https://developers.facebook.com/docs/plugins/comments#configurator"
+      : window.location.href
+  }
+  width="1270"
+/>
     </Row>
   );
 };
