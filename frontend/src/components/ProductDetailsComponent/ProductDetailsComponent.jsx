@@ -1,201 +1,190 @@
-import { Col, Flex, Image, Row } from "antd";
-import React, { useEffect } from "react";
-import imageProduct from "../../assets/images/test.webp";
-import imageSmall from "../../assets/images/imagesmall.webp";
+import React from 'react';
+import { Skeleton } from 'antd';
+import { Link } from 'react-router-dom';
+
 import {
-  WrapperStyleImageSmall,
-  WrapperStyleColImage,
-  WrapperStyleNameProduct,
-  WrapperStyleTextSell,
-  WrapperPriceProduct,
-  WrapperPriceTextProduct,
-  WrapperAddressProduct,
-  WrapperQualityProduct,
-  WrapperInputNumber,
-} from "./style";
-import { MinusOutlined, PlusOutlined, StarFilled } from "@ant-design/icons";
-import ButtonComponent from "../ButtonComponent/ButtonComponent";
-import LikeButtonComponent from "../LikeButtonComponent/LikeButtonComponent";
-import CommentComponent from "../CommentComponent/CommentComponent";
+  PageWrapper,
+  ContentWrapper,
+  ThreeColumnGrid,
+  PurchaseBoxGridItem,
+  MobileBuyBar,
+  MobilePriceText,
+  NotFoundWrapper,
+} from './style';
+import { token } from './tokens';
 
-// const ProductDetailsComponent = () => {
-//   const onChange = () => {};
-//   useEffect(() => {
-//     if (!document.getElementById("fb-root")) {
-//       const facebookRoot = document.createElement("div");
-//       facebookRoot.id = "fb-root";
-//       document.body.prepend(facebookRoot);
-//     }
-//     if (document.getElementById("facebook-jssdk")) return;
-//     const script = document.createElement("script");
-//     script.id = "facebook-jssdk";
-//     script.async = true;
-//     script.defer = true;
-//     script.crossOrigin = "anonymous";
-//     script.src = "https://connect.facebook.net/vi_VN/sdk.js#xfbml=1&version=v19.0";
-//     document.body.appendChild(script);
-//   }, []);
-//   return (
-//     <Row style={{ padding: "16px", background: "#fff" , borderRadius: '4px'}}>
-//       <Col span={10} style={{borderRight: '1px solid #e5e5e5', paddingRight: '8px'}}>
-//         <Image src={imageProduct} alt="image product" preview={false} />
-//         <Row style={{ paddingTop: "10px", justifyContent: "space-between" }}>
-//           <WrapperStyleColImage span={4}>
-//             <WrapperStyleImageSmall
-//               src={imageSmall}
-//               alt="image small"
-//               preview={false}
-//             />
-//           </WrapperStyleColImage>
-//           <WrapperStyleColImage span={4}>
-//             <WrapperStyleImageSmall
-//               src={imageSmall}
-//               alt="image small"
-//               preview={false}
-//             />
-//           </WrapperStyleColImage>
-//           <WrapperStyleColImage span={4}>
-//             <WrapperStyleImageSmall
-//               src={imageSmall}
-//               alt="image small"
-//               preview={false}
-//             />
-//           </WrapperStyleColImage>
-//           <WrapperStyleColImage span={4}>
-//             <WrapperStyleImageSmall
-//               src={imageSmall}
-//               alt="image small"
-//               preview={false}
-//             />
-//           </WrapperStyleColImage>
-//           <WrapperStyleColImage span={4}>
-//             <WrapperStyleImageSmall
-//               src={imageSmall}
-//               alt="image small"
-//               preview={false}
-//             />
-//           </WrapperStyleColImage>
-//           <WrapperStyleColImage span={4}>
-//             <WrapperStyleImageSmall
-//               src={imageSmall}
-//               alt="image small"
-//               preview={false}
-//             />
-//           </WrapperStyleColImage>
-//         </Row>
-//       </Col>
-//       <Col span={14} style={{paddingLeft: '12px'}}>
-//         <WrapperStyleNameProduct>
-//           Sách Thám tử lừng danh Conan trọn bộ bản đặc biệt kỉ niệm 20 năm
-//         </WrapperStyleNameProduct>
-//         <div>
-//           <StarFilled style={{ fontSize: "12px", color: "orange" }} />
-//           <StarFilled style={{ fontSize: "12px", color: "orange" }} />
-//           <StarFilled style={{ fontSize: "12px", color: "orange" }} />
-//           <StarFilled style={{ fontSize: "12px", color: "orange" }} />
-//           <WrapperStyleTextSell>| Đã bán 300+ </WrapperStyleTextSell>
-//         </div>
-//         <WrapperPriceProduct>
-//           <WrapperPriceTextProduct>200.000 đ</WrapperPriceTextProduct>
-//         </WrapperPriceProduct>
-//         <WrapperAddressProduct>
-//           <span>Giao đến </span>
-//           <span className="address">Đại học Công nghiệp Hà Nội</span>
-//           <span className="change-address"> - Đổi địa chỉ</span>
-//         </WrapperAddressProduct>
-//         <LikeButtonComponent
-//   dataHref={
-//     import.meta.env.VITE_IS_LOCAL
-//       ? "https://developers.facebook.com/docs/plugins/"
-//       : window.location.href
-//   }
-// />
-//         <div style={{margin: '10px 0 20px',padding: '10px 0', borderTop: '1px solid #e5e5e5', borderBottom: '1px solid #e5e5e5'}}>
-//           <div style={{marginBottom: '12px'}}>Số lượng</div>
-//           <WrapperQualityProduct>
-//             <button style={{border: 'none', background: 'transparent'}}>
-//                 <MinusOutlined style={{ color: "#000", fontSize: "20px" }} size="10"/>
-//             </button>
-            
+import Breadcrumb from './sub-components/Breadcrumb';
+import ImageGallery from './sub-components/ImageGallery';
+import ProductInfo from './sub-components/ProductInfo';
+import ShippingInfo from './sub-components/ShippingInfo';
+import SimilarProductsPlaceholder from './sub-components/SimilarProductsPlaceholder';
+import WarrantyInfo from './sub-components/WarrantyInfo';
+import SpecificationsTable from './sub-components/SpecificationsTable';
+import DescriptionSection from './sub-components/DescriptionSection';
+import PurchaseBox from './sub-components/PurchaseBox';
+import ReviewSection from './sub-components/ReviewSection';
+import TopDealsPlaceholder from './sub-components/TopDealsPlaceholder';
+import RecentlyViewed from './sub-components/RecentlyViewed';
+import ExploreMore from './sub-components/ExploreMore';
+import ButtonComponent from '../ButtonComponent/ButtonComponent';
 
-//             <WrapperInputNumber defaultValue={3} onChange={onChange} size="small"/>
+// ─── Trạng thái loading (Skeleton) ───────────────────────────────────────────
+const SkeletonLayout = () => (
+  <PageWrapper>
+    <ContentWrapper>
+      <Skeleton.Input active style={{ width: 300, height: 20, marginBottom: 16 }} />
+      <ThreeColumnGrid>
+        <Skeleton.Image active style={{ width: '100%', height: 320 }} />
+        <div>
+          <Skeleton active paragraph={{ rows: 6 }} />
+        </div>
+        <Skeleton active paragraph={{ rows: 4 }} />
+      </ThreeColumnGrid>
+    </ContentWrapper>
+  </PageWrapper>
+);
 
-//             <button style={{border: 'none', background: 'transparent'}}>
-//                 <PlusOutlined style={{ color: "#000", fontSize: "20px" }} size="10"/>
-//             </button>
-//           </WrapperQualityProduct>
-//         </div>
-//         <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-//             <ButtonComponent 
-//                 bordered={false}
-//                 size={40}
-//                 styleButton={{ 
-//                     backgroundColor: 'rgb(255, 57, 69)',
-//                     height: '48px',
-//                     width: '220px',
-//                     border: 'none',
-//                     borderRadius: '4px'
-//                 }}
-//                 textButton={'Chọn mua'}
-//                 styleTextButton={{color: '#fff', fontSize: '15px', fontWeight: '700'}}
-//             ></ButtonComponent>
+// ─── Trạng thái không tìm thấy ───────────────────────────────────────────────
+const NotFoundLayout = () => (
+  <PageWrapper>
+    <ContentWrapper>
+      <NotFoundWrapper>
+        <h2>😕 Không tìm thấy sản phẩm</h2>
+        <p>Sản phẩm này không tồn tại hoặc đã bị gỡ khỏi hệ thống.</p>
+        <Link to="/">
+          <ButtonComponent
+            textButton="Quay về trang chủ"
+            styleButton={{
+              backgroundColor: token.colorPrimary,
+              border: 'none',
+              borderRadius: token.borderRadiusSm,
+              marginTop: 16,
+              height: 40,
+              padding: '0 24px',
+            }}
+            styleTextButton={{ color: '#fff', fontWeight: 600 }}
+          />
+        </Link>
+      </NotFoundWrapper>
+    </ContentWrapper>
+  </PageWrapper>
+);
 
-//             <ButtonComponent 
-//                 size={40}
-//                 styleButton={{ 
-//                     backgroundColor: '#fff',
-//                     height: '48px',
-//                     width: '220px',
-//                     border: '1px solid rgb(13, 92, 182)',
-//                     borderRadius: '4px'
-//                 }}
-//                 textButton={'Mua trả sau'}
-//                 styleTextButton={{color: 'rgb(13, 92, 182)', fontSize: '15px'}}
-//             ></ButtonComponent>
-//         </div>
-//       </Col>
-//       <CommentComponent
-//   dataHref={
-//     import.meta.env.VITE_IS_LOCAL
-//       ? "https://developers.facebook.com/docs/plugins/comments#configurator"
-//       : window.location.href
-//   }
-//   width="1270"
-// />
-//     </Row>
-//   );
-// };
+// ─── Component chính ──────────────────────────────────────────────────────────
+const ProductDetailsComponent = ({
+  product,
+  isLoading = false,
+  onAddToCart = () => {},
+  onBuyNow = () => {},
+}) => {
+  // Loading
+  if (isLoading) return <SkeletonLayout />;
 
-const ProductDetailsComponent = ({ product }) => {
-  const productImage =
-    product?.images?.[0] ||
-    product?.image ||
-    "https://via.placeholder.com/400";
+  // Không tìm thấy
+  if (!product) return <NotFoundLayout />;
+
+  const formatVND = (amount) =>
+    amount ? `${Number(amount).toLocaleString('vi-VN')} ₫` : '';
 
   return (
-    <Row style={{ padding: "16px", background: "#fff" }}>
-      <Col span={10}>
-        <Image
-          src={productImage}
-          alt={product?.name}
-          preview={false}
+    <PageWrapper>
+      <ContentWrapper>
+        {/* A. Breadcrumb */}
+        <Breadcrumb
+          categoryPath={product.categoryPath || []}
+          productName={product.name || ''}
         />
-      </Col>
 
-      <Col span={14}>
-        <WrapperStyleNameProduct>
-          {product?.name}
-        </WrapperStyleNameProduct>
+        {/* B. Vùng 3 cột */}
+        <ThreeColumnGrid>
+          {/* Cột trái: Gallery */}
+          <div>
+            <ImageGallery images={product.images || []} />
+          </div>
 
-        <WrapperPriceProduct>
-          <WrapperPriceTextProduct>
-            {product?.price?.toLocaleString("vi-VN")} đ
-          </WrapperPriceTextProduct>
-        </WrapperPriceProduct>
+          {/* Cột giữa: Thông tin sản phẩm */}
+          <div>
+            <ProductInfo product={product} />
 
-        <p>{product?.description}</p>
-      </Col>
-    </Row>
+            <div style={{ height: 12 }} />
+
+            <ShippingInfo />
+
+            <SimilarProductsPlaceholder />
+
+            <WarrantyInfo />
+
+            <SpecificationsTable specifications={product.specifications} />
+
+            <DescriptionSection description={product.description} />
+          </div>
+
+          {/* Cột phải: Khung mua hàng (ở tablet span 2 cột dưới, ở mobile ẩn) */}
+          <PurchaseBoxGridItem>
+            <PurchaseBox
+              productId={product?._id}
+              price={product?.price}
+              onAddToCart={onAddToCart}
+              onBuyNow={onBuyNow}
+            />
+          </PurchaseBoxGridItem>
+        </ThreeColumnGrid>
+
+        {/* C. Đánh giá — full width */}
+        <div style={{ marginTop: 12 }}>
+          <ReviewSection
+            rating={product.rating}
+            reviewCount={product.reviewCount}
+          />
+        </div>
+
+        {/* D. Các khối full-width */}
+        <TopDealsPlaceholder />
+        <RecentlyViewed />
+        <ExploreMore />
+      </ContentWrapper>
+
+      {/* Mobile: Thanh mua hàng sticky ở đáy */}
+      <MobileBuyBar>
+        <MobilePriceText>{formatVND(product.price)}</MobilePriceText>
+        <ButtonComponent
+          onClick={() =>
+            onAddToCart({
+              productId: product?._id,
+              quantity: 1,
+              price: product?.price,
+            })
+          }
+          textButton="Thêm vào giỏ"
+          styleButton={{
+            backgroundColor: '#fff',
+            border: `1.5px solid ${token.colorPrimary}`,
+            borderRadius: token.borderRadiusSm,
+            height: 40,
+            flex: 1,
+          }}
+          styleTextButton={{ color: token.colorPrimary, fontWeight: 600, fontSize: 13 }}
+        />
+        <ButtonComponent
+          onClick={() =>
+            onBuyNow({
+              productId: product?._id,
+              quantity: 1,
+              price: product?.price,
+            })
+          }
+          textButton="Mua ngay"
+          styleButton={{
+            backgroundColor: token.colorDanger,
+            border: 'none',
+            borderRadius: token.borderRadiusSm,
+            height: 40,
+            flex: 1,
+          }}
+          styleTextButton={{ color: '#fff', fontWeight: 700, fontSize: 13 }}
+        />
+      </MobileBuyBar>
+    </PageWrapper>
   );
 };
 

@@ -1,18 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import * as ProductService from "../../services/ProductService";
-import ProductDetailsComponent from '../../components/ProductDetailsComponent/ProductDetailsComponent'
+import ProductDetailsComponent from '../../components/ProductDetailsComponent/ProductDetailsComponent';
+import { getMockProductDetail } from '../../data/mockProductDetail';
 
-// const ProductDetailsPage = () => {
-//   return (
-//     <div style={{padding: '0 120px', background: '#efefef', height: '1000px'}}>
-//         <h5>Trang chủ</h5>
-        
-//             <ProductDetailsComponent/>
-        
-//     </div>
-//   )
-// }
+// Bật fallback dữ liệu mock khi chưa kết nối backend
+// Xóa hoặc chuyển thành false khi backend sẵn sàng
+const USE_MOCK_FALLBACK = true;
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -26,6 +20,16 @@ const ProductDetailsPage = () => {
 
         if (response?.status === "OK") {
           setProduct(response.data);
+        } else if (USE_MOCK_FALLBACK) {
+          setProduct(getMockProductDetail(id));
+        } else {
+          setProduct(null);
+        }
+      } catch {
+        if (USE_MOCK_FALLBACK) {
+          setProduct(getMockProductDetail(id));
+        } else {
+          setProduct(null);
         }
       } finally {
         setLoading(false);
@@ -35,20 +39,9 @@ const ProductDetailsPage = () => {
     fetchProduct();
   }, [id]);
 
-  if (loading) {
-    return <div style={{ padding: "40px" }}>Đang tải sản phẩm...</div>;
-  }
-
-  if (!product) {
-    return <div style={{ padding: "40px" }}>Không tìm thấy sản phẩm</div>;
-  }
-
   return (
-    <div style={{ padding: "0 120px", background: "#efefef" }}>
-      <h5>Trang chủ / Chi tiết sản phẩm</h5>
-      <ProductDetailsComponent product={product} />
-    </div>
+    <ProductDetailsComponent product={product} isLoading={loading} />
   );
 };
 
-export default ProductDetailsPage
+export default ProductDetailsPage;
