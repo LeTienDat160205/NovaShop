@@ -1,9 +1,12 @@
-import React from 'react'
+import React from "react";
+import { WrapperTypeProduct } from "./style";
 
-const TypeProduct = ({name}) => {
+const TypeProduct = ({ name, onClick }) => {
   return (
-    <div>{name}</div>
-  )
-}
+    <WrapperTypeProduct onClick={onClick}>
+      {name}
+    </WrapperTypeProduct>
+  );
+};
 
-export default TypeProduct
+export default TypeProduct;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Badge, Col } from "antd";
 import {
   CaretDownOutlined,
@@ -17,6 +17,15 @@ import ButtonInputSearch from "../ButtonInputSearch/ButtonInputSearch";
 const HeaderComponent = () => {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
+
+  const handleSearch = (value) => {
+    const keyword = value.trim();
+
+    if (keyword) {
+      navigate(`/products?search=${encodeURIComponent(keyword)}`);
+    }
+  };
+
   const submitSearch = (event) => {
     event.preventDefault();
     if (query.trim())
@@ -25,7 +34,9 @@ const HeaderComponent = () => {
   return (
     <WrapperHeader>
       <Col span={5}>
-        <WrapperTextHeader>NovaShop</WrapperTextHeader>
+        <Link to="/" style={{ textDecoration: "none" }}>
+          <WrapperTextHeader>NovaShop</WrapperTextHeader>
+        </Link>
       </Col>
 
       <Col span={13}>
@@ -44,20 +55,42 @@ const HeaderComponent = () => {
         <WrapperHeaderAccount>
           <UserOutlined style={{ fontSize: "30px" }} />
           <div>
-            <div>
-              <span>Tài khoản </span>
-              <CaretDownOutlined />
-            </div>
-            <WrapperTextHeaderSmall>Đăng nhập / Đăng ký</WrapperTextHeaderSmall>
+            <Link
+              to="/sign-in"
+              style={{ color: "#fff", textDecoration: "none" }}
+            >
+              <div>
+                <span>Tài khoản </span>
+                <CaretDownOutlined />
+              </div>
+              <WrapperTextHeaderSmall>
+                Đăng nhập / Đăng ký
+              </WrapperTextHeaderSmall>
+            </Link>
           </div>
         </WrapperHeaderAccount>
 
-        <div>
+        {/* <div>
           <Badge count={0} size="small" showZero={false}>
             <ShoppingCartOutlined style={{ fontSize: "30px", color: "#fff" }} />
           </Badge>
           <WrapperTextHeaderSmall>Giỏ hàng</WrapperTextHeaderSmall>
-        </div>
+        </div> */}
+        <Link
+          to="/order"
+          style={{
+            color: "#fff",
+            textDecoration: "none",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Badge count={0} size="small" showZero={false}>
+            <ShoppingCartOutlined style={{ fontSize: "30px", color: "#fff" }} />
+          </Badge>
+          <WrapperTextHeaderSmall>Giỏ hàng</WrapperTextHeaderSmall>
+        </Link>
       </Col>
     </WrapperHeader>
   );

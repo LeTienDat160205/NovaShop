@@ -1,62 +1,3 @@
-// import { Meta } from "antd/es/list/Item";
-// import React from "react";
-// import {
-//   StyleNameProduct,
-//   WrapperCardStyle,
-//   WrapperDiscountText,
-//   WrapperPriceText,
-//   WrapperReportText,
-//   WrapperStyleTextSell,
-// } from "./style";
-// import { StarFilled } from "@ant-design/icons";
-// import logo from "../../assets/images/logo.png";
-
-// const CardComponent = ({ product }) => {
-//   return (
-//     <WrapperCardStyle
-//       hoverable
-//       variant="borderless"
-//       style={{ width: "100%" }}
-//       bodyStyle={{ padding: "10px" }}
-//       cover={
-//         <img
-//           draggable={false}
-//           alt={product.name}
-//           src={product.image}
-//         />
-//       }
-//     >
-//       <img
-//         src={logo}
-//         style={{
-//           width: "68px",
-//           height: "14px",
-//           position: "absolute",
-//           top: -1,
-//           left: -1,
-//           borderTopLeftRadius: "3px",
-//         }}
-//       />
-
-//       <StyleNameProduct>{product.name}</StyleNameProduct>
-
-//       <WrapperReportText>
-//         <span style={{ marginRight: "4px" }}>
-//           <span>{product.rating}</span>
-//           <StarFilled style={{ fontSize: "12px", color: "orange" }} />
-//         </span>
-//         <WrapperStyleTextSell>| Đã bán {product.sold}</WrapperStyleTextSell>
-//       </WrapperReportText>
-
-//       <WrapperPriceText>
-//         <span style={{ marginRight: "8px" }}>{product.price}</span>
-//         <WrapperDiscountText>{product.discount}</WrapperDiscountText>
-//       </WrapperPriceText>
-//     </WrapperCardStyle>
-//   );
-// };
-
-// export default CardComponent;
 import React from "react";
 import {
   StyleNameProduct,
@@ -68,8 +9,19 @@ import {
 } from "./style";
 import { StarFilled } from "@ant-design/icons";
 import logo from "../../assets/images/logo.png";
+import { useNavigate } from "react-router-dom";
 
-const CardComponent = ({ product }) => {
+const CardComponent = ({ product, onClick }) => {
+  const navigate = useNavigate();
+
+  const handleOpenProduct = () => {
+    if (onClick) {
+      onClick();
+      return;
+    }
+
+    navigate(`/product-details/${product?._id}`);
+  }
   // Lấy ảnh: Ưu tiên product.image hoặc tấm ảnh đầu tiên trong mảng product.images
   const productImage =
     product?.image ||
@@ -79,14 +31,19 @@ const CardComponent = ({ product }) => {
   return (
     <WrapperCardStyle
       hoverable
+      onClick={handleOpenProduct}
       variant="borderless"
-      style={{ width: "100%" }}
+      style={{ width: "100%", cursor: "pointer" }}
       bodyStyle={{ padding: "10px" }}
       cover={
         <img
           draggable={false}
           alt={product?.name || "Product Image"}
-          src={productImage}
+          src={
+            product?.image ||
+            product?.images?.[0] ||
+            "https://via.placeholder.com/200"
+          }
           style={{ height: "200px", objectFit: "cover" }}
         />
       }
@@ -118,7 +75,9 @@ const CardComponent = ({ product }) => {
 
       <WrapperPriceText>
         <span style={{ marginRight: "8px" }}>
-          {product?.price ? `${product.price.toLocaleString("vi-VN")} đ` : "0 đ"}
+          {product?.price
+            ? `${product.price.toLocaleString("vi-VN")} đ`
+            : "0 đ"}
         </span>
         {product?.discount ? (
           <WrapperDiscountText>-{product.discount}%</WrapperDiscountText>
