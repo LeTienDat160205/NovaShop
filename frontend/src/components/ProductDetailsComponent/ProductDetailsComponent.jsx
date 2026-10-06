@@ -110,7 +110,7 @@ const ProductDetailsComponent = ({
 
             <ShippingInfo />
 
-            <SimilarProductsPlaceholder />
+            <SimilarProductsPlaceholder productId={product?._id}/>
 
             <WarrantyInfo />
 

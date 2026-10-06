@@ -11,3 +11,8 @@ export const getDetailsProduct = async (id) => {
   const res = await axios.get(`${API_URL}/get-details/${id}`);
   return res.data;
 };
+
+export const getSimilarProducts = async (id) => {
+    const res = await axios.get(`${API_URL}/get-similar/${id}`);
+    return res.data;
+};

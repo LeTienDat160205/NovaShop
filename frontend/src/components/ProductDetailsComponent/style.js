@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { Link } from 'react-router-dom';
 import { token } from './tokens';
 
 // ─── Layout wrappers ─────────────────────────────────────────────────────────
@@ -873,4 +874,77 @@ export const NotFoundWrapper = styled.div`
 
   h2 { color: ${token.colorTextPrimary}; margin-bottom: 12px; }
   p  { color: ${token.colorTextSecondary}; }
+`;
+
+// ─── Sản phẩm tương tự ────────────────────────────────────────────────────────
+export const SimilarProductsGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+
+    @media (max-width: ${token.breakpoint.desktop}) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @media (max-width: ${token.breakpoint.tablet}) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+`;
+
+export const SimilarProductCard = styled(Link)`
+    display: block;
+    min-width: 0;
+    border: 1px solid #ebebeb;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    text-decoration: none;
+    color: ${token.colorTextPrimary};
+    transition: box-shadow 0.2s, transform 0.2s;
+
+    &:hover {
+        box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+    }
+`;
+
+export const SimilarProductImage = styled.div`
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #fff;
+    overflow: hidden;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+`;
+
+export const SimilarProductInfo = styled.div`
+    padding: 8px;
+`;
+
+export const SimilarProductName = styled.div`
+    font-size: 14px;
+    line-height: 20px;
+    height: 40px;
+    overflow: hidden;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+`;
+
+export const SimilarProductRating = styled.div`
+    margin-top: 6px;
+    color: #FFC400;
+    font-size: 13px;
+`;
+
+export const SimilarProductPrice = styled.div`
+    margin-top: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #FF424E;
 `;
