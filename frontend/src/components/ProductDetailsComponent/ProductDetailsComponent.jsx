@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Skeleton } from 'antd';
 import { Link } from 'react-router-dom';
 
@@ -17,13 +17,13 @@ import Breadcrumb from './sub-components/Breadcrumb';
 import ImageGallery from './sub-components/ImageGallery';
 import ProductInfo from './sub-components/ProductInfo';
 import ShippingInfo from './sub-components/ShippingInfo';
-import SimilarProductsPlaceholder from './sub-components/SimilarProductsPlaceholder';
+import SimilarProducts from './sub-components/SimilarProducts';
 import WarrantyInfo from './sub-components/WarrantyInfo';
 import SpecificationsTable from './sub-components/SpecificationsTable';
 import DescriptionSection from './sub-components/DescriptionSection';
 import PurchaseBox from './sub-components/PurchaseBox';
 import ReviewSection from './sub-components/ReviewSection';
-import TopDealsPlaceholder from './sub-components/TopDealsPlaceholder';
+import TopDeals from './sub-components/TopDeals';
 import RecentlyViewed from './sub-components/RecentlyViewed';
 import ExploreMore from './sub-components/ExploreMore';
 import ButtonComponent from '../ButtonComponent/ButtonComponent';
@@ -70,6 +70,9 @@ const NotFoundLayout = () => (
   </PageWrapper>
 );
 
+const VIEWED_PRODUCTS_KEY = 'novashop_viewed_products';
+const MAX_VIEWED_PRODUCTS = 12;
+
 // ─── Component chính ──────────────────────────────────────────────────────────
 const ProductDetailsComponent = ({
   product,
@@ -77,6 +80,34 @@ const ProductDetailsComponent = ({
   onAddToCart = () => {},
   onBuyNow = () => {},
 }) => {
+    // Lưu sản phẩm hiện tại vào lịch sử đã xem
+    useEffect(() => {
+    if (!product?._id) return;
+
+    try {
+      const viewedIds = JSON.parse(
+        localStorage.getItem(VIEWED_PRODUCTS_KEY) || '[]'
+      );
+
+      const newViewedIds = [
+        product._id,
+        ...viewedIds.filter(
+          (id) => id !== product._id
+        ),
+      ].slice(0, MAX_VIEWED_PRODUCTS);
+
+      localStorage.setItem(
+        VIEWED_PRODUCTS_KEY,
+        JSON.stringify(newViewedIds)
+      );
+    } catch (error) {
+      console.error(
+        'Lỗi lưu lịch sử sản phẩm:',
+        error
+      );
+    }
+  }, [product?._id]);
+
   // Loading
   if (isLoading) return <SkeletonLayout />;
 
@@ -110,7 +141,7 @@ const ProductDetailsComponent = ({
 
             <ShippingInfo />
 
-            <SimilarProductsPlaceholder productId={product?._id}/>
+            <SimilarProducts productId={product?._id}/>
 
             <WarrantyInfo />
 
@@ -139,9 +170,9 @@ const ProductDetailsComponent = ({
         </div>
 
         {/* D. Các khối full-width */}
-        <TopDealsPlaceholder />
-        <RecentlyViewed />
-        <ExploreMore />
+        <TopDeals currentProductId={product?._id} />
+        <RecentlyViewed currentProductId={product?._id}/>
+        <ExploreMore currentProductId={product?._id}/>
       </ContentWrapper>
 
       {/* Mobile: Thanh mua hàng sticky ở đáy */}
