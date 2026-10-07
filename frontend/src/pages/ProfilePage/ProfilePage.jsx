@@ -94,17 +94,21 @@ const ProfilePage = () => {
 
   return (
     <main
-      style={{
-        background: "#f5f5fa",
-        minHeight: "calc(100vh - 72px)",
-        padding: "24px clamp(16px, 6vw, 120px)",
-      }}
+    style={{
+      background: "#f5f5fa",
+      minHeight: "calc(100vh - 72px)",
+      padding: "32px 24px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      fontSize: 16,
+    }}
     >
       <Title level={4} style={{ fontWeight: 400, marginBottom: 20 }}>
         Thông tin tài khoản
       </Title>
 
-      <Card style={{ maxWidth: 1200, borderRadius: 8 }}>
+      <Card style={{width: "100%", maxWidth: 1300, borderRadius: 8,fontSize: 16,}}>
         <Row gutter={[32, 24]}>
           {/* CỘT TRÁI */}
           <Col xs={24} lg={13}>
