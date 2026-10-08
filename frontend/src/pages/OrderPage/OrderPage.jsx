@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   DeleteOutlined,
   MinusOutlined,
@@ -6,53 +7,103 @@ import {
   RightOutlined,
 } from "@ant-design/icons";
 import { Button, Checkbox, Image } from "antd";
-import productImage from "../../assets/images/test.webp";
 
-const initialItems = [
-  {
-    id: 1,
-    name: "Sách Thám tử lừng danh Conan - Bản đặc biệt",
-    shop: "Nhà sách Nova",
-    price: 200000,
-    quantity: 1,
-    image: productImage,
-  },
-  {
-    id: 2,
-    name: "Combo sách kỹ năng sống tuyển chọn",
-    shop: "Nhà sách Nova",
-    price: 145000,
-    quantity: 2,
-    image: productImage,
-  },
-];
 
 const formatPrice = (price) =>
   `${new Intl.NumberFormat("vi-VN").format(price)} ₫`;
 
 const OrderPage = () => {
-  const [items, setItems] = useState(initialItems);
+  const [items, setItems] = useState(() => {
+    try {
+      const savedCart = JSON.parse(
+        localStorage.getItem("novashop_cart") || "[]"
+      );
 
-  const updateQuantity = (id, value) => {
+      return Array.isArray(savedCart) ? savedCart : [];
+    } catch (error) {
+      console.error("Lỗi đọc giỏ hàng:", error);
+      return [];
+    }
+  });
+
+  // State quản lý sản phẩm được chọn
+  const [selectedIds, setSelectedIds] = useState([]);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.setItem("novashop_cart", JSON.stringify(items));
+  }, [items]);
+
+  const updateQuantity = (productId, value) => {
     setItems((currentItems) =>
       currentItems.map((item) =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + value) }
+        item.productId === productId
+          ? {
+            ...item,
+            quantity: Math.max(1, item.quantity + value),
+          }
           : item
       )
     );
   };
 
-  const removeItem = (id) => {
+  const removeItem = (productId) => {
     setItems((currentItems) =>
-      currentItems.filter((item) => item.id !== id)
+      currentItems.filter((item) => item.productId !== productId)
+    );
+
+    setSelectedIds((prev) =>
+      prev.filter((id) => id !== productId)
     );
   };
 
-  const temporaryPrice = useMemo(
-    () => items.reduce((total, item) => total + item.price * item.quantity, 0),
-    [items]
+  const temporaryPrice = useMemo(() => {
+    return items
+      .filter((item) => selectedIds.includes(item.productId))
+      .reduce(
+        (total, item) =>
+          total + Number(item.price) * Number(item.quantity),
+        0
+      );
+  }, [items, selectedIds]);
+
+  const handleSelectItem = (productId, checked) => {
+    setSelectedIds((prev) =>
+      checked
+        ? [...new Set([...prev, productId])]
+        : prev.filter((id) => id !== productId)
+    );
+  };
+
+  const handleSelectAll = (checked) => {
+    setSelectedIds(checked ? items.map((item) => item.productId) : []);
+  };
+
+  const allSelected =
+    items.length > 0 &&
+    items.every((item) => selectedIds.includes(item.productId));
+
+  const someSelected = items.some((item) =>
+    selectedIds.includes(item.productId)
   );
+
+  const handleCheckout = () => {
+    const selectedItems = items.filter((item) =>
+      selectedIds.includes(item.productId)
+    );
+
+    if (selectedItems.length === 0) {
+      return;
+    }
+
+    navigate("/payment", {
+      state: {
+        selectedItems,
+        totalPrice: temporaryPrice,
+      },
+    });
+  };
 
   return (
     <div
@@ -80,12 +131,18 @@ const OrderPage = () => {
               marginBottom: "12px",
             }}
           >
-            <Checkbox>Chọn tất cả ({items.length})</Checkbox>
+            <Checkbox
+              checked={allSelected}
+              indeterminate={someSelected && !allSelected}
+              onChange={(e) => handleSelectAll(e.target.checked)}
+            >
+              Chọn tất cả ({items.length})
+            </Checkbox>
           </div>
 
           {items.map((item) => (
             <div
-              key={item.id}
+              key={item.productId}
               style={{
                 background: "#fff",
                 borderRadius: "4px",
@@ -94,11 +151,15 @@ const OrderPage = () => {
               }}
             >
               <div style={{ marginBottom: "14px", fontSize: "14px", fontWeight: 500 }}>
-                <Checkbox>{item.shop}</Checkbox>
+                <strong style={{ fontSize: 14 }}>NovaShop</strong>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "34px 100px 1fr 145px 115px 32px", gap: "12px", alignItems: "center" }}>
-                <Checkbox />
+                <Checkbox
+                  checked={selectedIds.includes(item.productId)}
+                  onChange={(e) =>
+                    handleSelectItem(item.productId, e.target.checked)}
+                />
 
                 <Image
                   src={item.image}
@@ -125,7 +186,7 @@ const OrderPage = () => {
                   <Button
                     size="small"
                     icon={<MinusOutlined />}
-                    onClick={() => updateQuantity(item.id, -1)}
+                    onClick={() => updateQuantity(item.productId, -1)}
                   />
                   <span
                     style={{
@@ -142,12 +203,12 @@ const OrderPage = () => {
                   <Button
                     size="small"
                     icon={<PlusOutlined />}
-                    onClick={() => updateQuantity(item.id, 1)}
+                    onClick={() => updateQuantity(item.productId, 1)}
                   />
                 </div>
 
                 <DeleteOutlined
-                  onClick={() => removeItem(item.id)}
+                  onClick={() => removeItem(item.productId)}
                   style={{ color: "#808089", cursor: "pointer" }}
                 />
               </div>
@@ -191,7 +252,8 @@ const OrderPage = () => {
               type="primary"
               block
               size="large"
-              disabled={!items.length}
+              onClick={handleCheckout}
+              disabled={!items.some((item) => selectedIds.includes(item.productId))}
               style={{
                 marginTop: "16px",
                 background: "#ff424e",
