@@ -31,7 +31,7 @@ const SignInPage = () => {
       localStorage.setItem('novashop_token', result.token)
       localStorage.setItem('novashop_user', JSON.stringify(result.user))
       window.dispatchEvent(new Event('novashop-auth-changed'))
-      navigate('/')
+      navigate(location.state?.from || '/', { replace: true });
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Không thể kết nối máy chủ. Vui lòng thử lại.')
     } finally {

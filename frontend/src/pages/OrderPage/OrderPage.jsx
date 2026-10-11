@@ -1,272 +1,229 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  DeleteOutlined,
-  MinusOutlined,
-  PlusOutlined,
-  RightOutlined,
-} from "@ant-design/icons";
-import { Button, Checkbox, Image } from "antd";
+import { DeleteOutlined, MinusOutlined, PlusOutlined, RightOutlined, ShopOutlined } from "@ant-design/icons";
+import { Button, Checkbox, Image, Spin, Empty, message } from "antd";
+import * as CartService from "../../services/CartService";
 
-
-const formatPrice = (price) =>
-  `${new Intl.NumberFormat("vi-VN").format(price)} ₫`;
+const formatPrice = price => `${new Intl.NumberFormat("vi-VN").format(Number(price) || 0)} ₫`;
 
 const OrderPage = () => {
-  const [items, setItems] = useState(() => {
-    try {
-      const savedCart = JSON.parse(
-        localStorage.getItem("novashop_cart") || "[]"
-      );
+    const [items, setItems] = useState([]);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [updatingIds, setUpdatingIds] = useState([]);
+    const navigate = useNavigate();
 
-      return Array.isArray(savedCart) ? savedCart : [];
-    } catch (error) {
-      console.error("Lỗi đọc giỏ hàng:", error);
-      return [];
-    }
-  });
+    const loadCart = async () => {
+        try {
+            setLoading(true);
+            const response = await CartService.getCart();
+            setItems(response?.data || []);
+        } catch (error) {
+            if (error.response?.status === 401 || !localStorage.getItem("novashop_token")) {
+                message.warning("Vui lòng đăng nhập để xem giỏ hàng.");
+                navigate("/sign-in", { state: { from: "/order" }, replace: true });
+            } else {
+                message.error(error.response?.data?.message || "Không thể tải giỏ hàng.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  // State quản lý sản phẩm được chọn
-  const [selectedIds, setSelectedIds] = useState([]);
+    useEffect(() => {
+        loadCart();
+    }, []);
 
-  const navigate = useNavigate();
+    const updateQuantity = async (productId, quantity) => {
+        const nextQuantity = Math.max(1, Math.min(99, Number(quantity) || 1));
+        setUpdatingIds(prev => [...prev, productId]);
 
-  useEffect(() => {
-    localStorage.setItem("novashop_cart", JSON.stringify(items));
-  }, [items]);
+        try {
+            await CartService.updateCartQuantity(productId, nextQuantity);
+            setItems(prev => prev.map(item => item.productId === productId ? { ...item, quantity: nextQuantity } : item));
+        } catch (error) {
+            message.error(error.response?.data?.message || "Không thể cập nhật số lượng.");
+        } finally {
+            setUpdatingIds(prev => prev.filter(id => id !== productId));
+        }
+    };
 
-  const updateQuantity = (productId, value) => {
-    setItems((currentItems) =>
-      currentItems.map((item) =>
-        item.productId === productId
-          ? {
-            ...item,
-            quantity: Math.max(1, item.quantity + value),
-          }
-          : item
-      )
-    );
-  };
+    const removeItem = async productId => {
+        try {
+            await CartService.removeCartItem(productId);
+            setItems(prev => prev.filter(item => item.productId !== productId));
+            setSelectedIds(prev => prev.filter(id => id !== productId));
+            message.success("Đã xóa sản phẩm khỏi giỏ hàng.");
+        } catch (error) {
+            message.error(error.response?.data?.message || "Không thể xóa sản phẩm.");
+        }
+    };
 
-  const removeItem = (productId) => {
-    setItems((currentItems) =>
-      currentItems.filter((item) => item.productId !== productId)
-    );
+    const selectedItems = useMemo(() => items.filter(item => selectedIds.includes(item.productId)), [items, selectedIds]);
+    const totalPrice = useMemo(() => selectedItems.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0), [selectedItems]);
+    const allSelected = items.length > 0 && items.every(item => selectedIds.includes(item.productId));
+    const someSelected = items.some(item => selectedIds.includes(item.productId));
 
-    setSelectedIds((prev) =>
-      prev.filter((id) => id !== productId)
-    );
-  };
+    const handleSelectItem = (productId, checked) => {
+        setSelectedIds(prev => checked ? [...new Set([...prev, productId])] : prev.filter(id => id !== productId));
+    };
 
-  const temporaryPrice = useMemo(() => {
-    return items
-      .filter((item) => selectedIds.includes(item.productId))
-      .reduce(
-        (total, item) =>
-          total + Number(item.price) * Number(item.quantity),
-        0
-      );
-  }, [items, selectedIds]);
+    const handleSelectAll = checked => {
+        setSelectedIds(checked ? items.map(item => item.productId) : []);
+    };
 
-  const handleSelectItem = (productId, checked) => {
-    setSelectedIds((prev) =>
-      checked
-        ? [...new Set([...prev, productId])]
-        : prev.filter((id) => id !== productId)
-    );
-  };
+    const openProduct = productId => {
+        if (productId) navigate(`/product-details/${productId}`);
+    };
 
-  const handleSelectAll = (checked) => {
-    setSelectedIds(checked ? items.map((item) => item.productId) : []);
-  };
+    const handleCheckout = () => {
+        if (!selectedItems.length) {
+            message.warning("Vui lòng chọn ít nhất một sản phẩm để mua hàng.");
+            return;
+        }
+        navigate("/payment", { state: { selectedItems, totalPrice } });
+    };
 
-  const allSelected =
-    items.length > 0 &&
-    items.every((item) => selectedIds.includes(item.productId));
-
-  const someSelected = items.some((item) =>
-    selectedIds.includes(item.productId)
-  );
-
-  const handleCheckout = () => {
-    const selectedItems = items.filter((item) =>
-      selectedIds.includes(item.productId)
-    );
-
-    if (selectedItems.length === 0) {
-      return;
+    if (loading) {
+        return <div style={{ minHeight: 400, display: "flex", justifyContent: "center", alignItems: "center" }}><Spin size="large" tip="Đang tải giỏ hàng..." /></div>;
     }
 
-    navigate("/payment", {
-      state: {
-        selectedItems,
-        totalPrice: temporaryPrice,
-      },
-    });
-  };
+    const cardStyle = { background: "#fff", borderRadius: 8, marginBottom: 12, overflow: "hidden" };
+    const mutedText = { color: "#808089", fontSize: 14 };
 
-  return (
-    <div
-      style={{
-        minHeight: "calc(100vh - 76px)",
-        background: "#f5f5fa",
-        padding: "20px 120px 40px",
-      }}
-    >
-      <div style={{ fontSize: "13px", marginBottom: "16px", color: "#808089" }}>
-        Trang chủ <RightOutlined style={{ fontSize: "10px" }} /> Giỏ hàng
-      </div>
+    return (
+        <main style={{ minHeight: "calc(100vh - 76px)", background: "#f5f5fa", padding: "20px clamp(12px, 3vw, 40px) 40px", color: "#27272a" }}>
+            <div style={{ fontSize: 13, marginBottom: 16, color: "#808089" }}>
+                <span onClick={() => navigate("/")} style={{ cursor: "pointer" }}>Trang chủ</span>
+                {" "}<RightOutlined style={{ fontSize: 10 }} />{" "}
+                <span style={{ color: "#27272a" }}>Giỏ hàng</span>
+            </div>
 
-      <h2 style={{ fontSize: "20px", marginBottom: "18px" }}>
-        Giỏ hàng ({items.length} sản phẩm)
-      </h2>
+            <h2 style={{ fontSize: 24, fontWeight: 600, marginBottom: 20 }}>GIỎ HÀNG</h2>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 330px", gap: "20px" }}>
-        <div>
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: "4px",
-              padding: "14px 16px",
-              marginBottom: "12px",
-            }}
-          >
-            <Checkbox
-              checked={allSelected}
-              indeterminate={someSelected && !allSelected}
-              onChange={(e) => handleSelectAll(e.target.checked)}
-            >
-              Chọn tất cả ({items.length})
-            </Checkbox>
-          </div>
-
-          {items.map((item) => (
-            <div
-              key={item.productId}
-              style={{
-                background: "#fff",
-                borderRadius: "4px",
-                padding: "16px",
-                marginBottom: "12px",
-              }}
-            >
-              <div style={{ marginBottom: "14px", fontSize: "14px", fontWeight: 500 }}>
-                <strong style={{ fontSize: 14 }}>NovaShop</strong>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "34px 100px 1fr 145px 115px 32px", gap: "12px", alignItems: "center" }}>
-                <Checkbox
-                  checked={selectedIds.includes(item.productId)}
-                  onChange={(e) =>
-                    handleSelectItem(item.productId, e.target.checked)}
-                />
-
-                <Image
-                  src={item.image}
-                  preview={false}
-                  width={90}
-                  height={90}
-                  style={{ objectFit: "cover" }}
-                />
-
-                <div>
-                  <p style={{ margin: 0, fontSize: "14px", lineHeight: 1.45 }}>
-                    {item.name}
-                  </p>
-                  <span style={{ color: "#808089", fontSize: "12px" }}>
-                    Giao hàng tiêu chuẩn
-                  </span>
+            {items.length === 0 ? (
+                <div style={{ ...cardStyle, padding: "60px 20px", textAlign: "center" }}>
+                    <Empty description="Giỏ hàng của bạn đang trống">
+                        <Button type="primary" onClick={() => navigate("/")}>Tiếp tục mua sắm</Button>
+                    </Empty>
                 </div>
+            ) : (
+                <div className="cart-layout">
+                    <section style={{ minWidth: 0 }}>
+                        <div style={{ ...cardStyle, padding: "16px 20px" }}>
+                            <div className="cart-columns">
+                                <div><Checkbox checked={allSelected} indeterminate={someSelected && !allSelected} onChange={e => handleSelectAll(e.target.checked)}>Tất cả ({items.length} sản phẩm)</Checkbox></div>
+                                <div style={mutedText}>Đơn giá</div>
+                                <div style={mutedText}>Số lượng</div>
+                                <div style={mutedText}>Thành tiền</div>
+                                <div style={{ textAlign: "center" }}>
+                                    <DeleteOutlined title="Xóa các sản phẩm đã chọn" style={{ color: "#808089", cursor: "pointer", fontSize: 18 }} onClick={async () => {
+                                        if (!selectedIds.length) return message.warning("Vui lòng chọn sản phẩm cần xóa.");
+                                        for (const id of selectedIds) await removeItem(id);
+                                    }} />
+                                </div>
+                            </div>
+                        </div>
 
-                <strong style={{ color: "#ff424e", fontSize: "15px" }}>
-                  {formatPrice(item.price)}
-                </strong>
+                        <div style={cardStyle}>
+                            <div style={{ padding: "16px 20px", borderBottom: "1px solid #f2f2f2", fontSize: 15, fontWeight: 500 }}>
+                                <ShopOutlined style={{ color: "#808089", marginRight: 8 }} /> NovaShop <RightOutlined style={{ fontSize: 11, color: "#808089" }} />
+                            </div>
 
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <Button
-                    size="small"
-                    icon={<MinusOutlined />}
-                    onClick={() => updateQuantity(item.productId, -1)}
-                  />
-                  <span
-                    style={{
-                      width: "36px",
-                      textAlign: "center",
-                      borderTop: "1px solid #d9d9d9",
-                      borderBottom: "1px solid #d9d9d9",
-                      height: "24px",
-                      lineHeight: "24px",
-                    }}
-                  >
-                    {item.quantity}
-                  </span>
-                  <Button
-                    size="small"
-                    icon={<PlusOutlined />}
-                    onClick={() => updateQuantity(item.productId, 1)}
-                  />
+                            {items.map(item => (
+                                <div key={item.productId} className="cart-product">
+                                    <div className="cart-product-main">
+                                        <Checkbox checked={selectedIds.includes(item.productId)} onChange={e => handleSelectItem(item.productId, e.target.checked)} />
+
+                                        <div className="cart-product-image" onClick={() => openProduct(item.productId)} title="Xem chi tiết sản phẩm">
+                                            <Image src={item.image || item.images?.[0] || "https://via.placeholder.com/100"} alt={item.name} preview={false} width={100} height={100} style={{ objectFit: "contain" }} />
+                                        </div>
+
+                                        <div className="cart-product-info">
+                                            <div className="cart-product-name" onClick={() => openProduct(item.productId)} title="Xem chi tiết sản phẩm">{item.name}</div>
+                                            <div style={{ color: "#fa8c16", fontSize: 13, marginTop: 6 }}>Sản phẩm NovaShop</div>
+                                        </div>
+
+                                        <div className="cart-unit-price">
+                                            <strong>{formatPrice(item.price)}</strong>
+                                            {item.listPrice > item.price && <div style={{ color: "#808089", fontSize: 12, textDecoration: "line-through", marginTop: 4 }}>{formatPrice(item.listPrice)}</div>}
+                                        </div>
+
+                                        <div className="cart-quantity">
+                                            <Button size="small" icon={<MinusOutlined />} disabled={item.quantity <= 1 || updatingIds.includes(item.productId)} onClick={() => updateQuantity(item.productId, item.quantity - 1)} />
+                                            <span>{item.quantity}</span>
+                                            <Button size="small" icon={<PlusOutlined />} disabled={item.quantity >= 99 || updatingIds.includes(item.productId)} onClick={() => updateQuantity(item.productId, item.quantity + 1)} />
+                                        </div>
+
+                                        <div className="cart-line-total">{formatPrice(Number(item.price) * Number(item.quantity))}</div>
+
+                                        <div className="cart-delete">
+                                            <DeleteOutlined title="Xóa sản phẩm" onClick={() => removeItem(item.productId)} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <Button icon={<ShopOutlined />} onClick={() => navigate("/")} style={{ marginBottom: 16 }}>Tiếp tục mua sắm</Button>
+                    </section>
+
+                    <aside className="cart-summary">
+                        <h3 style={{ fontSize: 17, margin: "0 0 20px" }}>Tổng kết đơn hàng</h3>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+                            <span style={mutedText}>Tổng tiền hàng</span><span>{formatPrice(totalPrice)}</span>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+                            <span style={mutedText}>Giảm giá</span><span style={{ color: "#00ab56" }}>0 ₫</span>
+                        </div>
+                        <div style={{ borderTop: "1px solid #ebebf0", paddingTop: 18, display: "flex", justifyContent: "space-between", gap: 12 }}>
+                            <strong>Tổng thanh toán</strong>
+                            <strong style={{ color: "#ff424e", fontSize: 20 }}>{formatPrice(totalPrice)}</strong>
+                        </div>
+                        <div style={{ color: "#808089", fontSize: 12, marginTop: 8, textAlign: "right" }}>Chưa bao gồm phí vận chuyển</div>
+                        <Button type="primary" block size="large" onClick={handleCheckout} disabled={!selectedItems.length} style={{ marginTop: 20, height: 46, background: "#ff424e", borderColor: "#ff424e" }}>
+                            Mua hàng ({selectedItems.length})
+                        </Button>
+                    </aside>
                 </div>
+            )}
 
-                <DeleteOutlined
-                  onClick={() => removeItem(item.productId)}
-                  style={{ color: "#808089", cursor: "pointer" }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <aside style={{ height: "fit-content", background: "#fff", borderRadius: "4px" }}>
-          <div style={{ padding: "16px", borderBottom: "1px solid #ebebf0" }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span style={{ color: "#808089" }}>Tạm tính</span>
-              <span>{formatPrice(temporaryPrice)}</span>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginTop: "12px",
-              }}
-            >
-              <span style={{ color: "#808089" }}>Phí vận chuyển</span>
-              <span style={{ color: "#00ab56" }}>Miễn phí</span>
-            </div>
-          </div>
-
-          <div style={{ padding: "16px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end" }}>
-              <span style={{ color: "#808089" }}>Tổng tiền</span>
-              <div style={{ textAlign: "right" }}>
-                <strong style={{ color: "#ff424e", fontSize: "22px" }}>
-                  {formatPrice(temporaryPrice)}
-                </strong>
-                <div style={{ color: "#808089", fontSize: "12px" }}>
-                  Đã bao gồm VAT
-                </div>
-              </div>
-            </div>
-
-            <Button
-              type="primary"
-              block
-              size="large"
-              onClick={handleCheckout}
-              disabled={!items.some((item) => selectedIds.includes(item.productId))}
-              style={{
-                marginTop: "16px",
-                background: "#ff424e",
-                borderColor: "#ff424e",
-              }}
-            >
-              Mua hàng
-            </Button>
-          </div>
-        </aside>
-      </div>
-    </div>
-  );
+            <style>{`
+                .cart-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 20px; align-items: start; }
+                .cart-columns { display: grid; grid-template-columns: minmax(220px, 1fr) 120px 120px 130px 28px; gap: 12px; align-items: center; }
+                .cart-columns > div:not(:first-child) { text-align: center; }
+                .cart-product { padding: 20px; border-bottom: 1px solid #f2f2f2; }
+                .cart-product:last-child { border-bottom: none; }
+                .cart-product-main { display: grid; grid-template-columns: 24px 100px minmax(120px, 1fr) 120px 120px 130px 24px; gap: 12px; align-items: center; }
+                .cart-product-image { display: flex; align-items: center; justify-content: center; cursor: pointer; background: #fff; }
+                .cart-product-name { font-size: 15px; line-height: 1.5; cursor: pointer; }
+                .cart-product-name:hover { color: #1677ff; }
+                .cart-unit-price { text-align: center; }
+                .cart-unit-price strong, .cart-line-total { color: #ff424e; font-size: 15px; font-weight: 600; }
+                .cart-quantity { display: flex; align-items: center; justify-content: center; }
+                .cart-quantity > span { min-width: 32px; text-align: center; }
+                .cart-line-total { text-align: center; }
+                .cart-delete { text-align: center; color: #808089; cursor: pointer; font-size: 17px; }
+                .cart-summary { background: #fff; border-radius: 8px; padding: 20px; position: sticky; top: 90px; }
+                @media (max-width: 1100px) {
+                    .cart-layout { grid-template-columns: minmax(0, 1fr); }
+                    .cart-summary { position: static; }
+                }
+                @media (max-width: 760px) {
+                    .cart-columns { grid-template-columns: 1fr 24px; }
+                    .cart-columns > div:nth-child(2), .cart-columns > div:nth-child(3), .cart-columns > div:nth-child(4) { display: none; }
+                    .cart-product { padding: 14px 10px; }
+                    .cart-product-main { grid-template-columns: 22px 76px minmax(0, 1fr) 24px; gap: 8px; }
+                    .cart-product-image img { max-width: 76px; max-height: 76px; }
+                    .cart-product-info { grid-column: 3; }
+                    .cart-unit-price { grid-column: 3; text-align: left; }
+                    .cart-quantity { grid-column: 2 / 4; justify-content: flex-start; }
+                    .cart-line-total { grid-column: 3; text-align: left; }
+                    .cart-delete { grid-column: 4; grid-row: 1; }
+                }
+            `}</style>
+        </main>
+    );
 };
 
-export default OrderPage 
+export default OrderPage;

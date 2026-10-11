@@ -1,109 +1,94 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { message } from "antd";
 import * as ProductService from "../../services/ProductService";
+import * as CartService from "../../services/CartService";
 import ProductDetailsComponent from '../../components/ProductDetailsComponent/ProductDetailsComponent';
 import { getMockProductDetail } from '../../data/mockProductDetail';
-import { message } from "antd";
 
-// Bật fallback dữ liệu mock khi chưa kết nối backend
-// Xóa hoặc chuyển thành false khi backend sẵn sàng
-const USE_MOCK_FALLBACK = true;
+const USE_MOCK_FALLBACK = false;
 
 const ProductDetailsPage = () => {
-  const { id } = useParams();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
+    const { id } = useParams();
+    const navigate = useNavigate();
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await ProductService.getDetailsProduct(id);
+    useEffect(() => {
+        const fetchProduct = async () => {
+            setLoading(true);
+            try {
+                const response = await ProductService.getDetailsProduct(id);
+                if (response?.status === "OK" && response.data) {
+                    setProduct(response.data);
+                } else {
+                    setProduct(USE_MOCK_FALLBACK ? getMockProductDetail(id) : null);
+                }
+            } catch (error) {
+                setProduct(USE_MOCK_FALLBACK ? getMockProductDetail(id) : null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProduct();
+    }, [id]);
 
-        if (response?.status === "OK") {
-          setProduct(response.data);
-        } else if (USE_MOCK_FALLBACK) {
-          setProduct(getMockProductDetail(id));
-        } else {
-          setProduct(null);
-        }
-      } catch {
-        if (USE_MOCK_FALLBACK) {
-          setProduct(getMockProductDetail(id));
-        } else {
-          setProduct(null);
-        }
-      } finally {
-        setLoading(false);
-      }
+    const requireLogin = () => {
+        if (localStorage.getItem('novashop_token')) return true;
+        message.warning('Vui lòng đăng nhập để tiếp tục.');
+        navigate('/sign-in', { state: { from: `/product-details/${id}` } });
+        return false;
     };
 
-    fetchProduct();
-  }, [id]);
+    const handleAddToCart = async ({ productId, quantity }) => {
+        if (!requireLogin()) return;
+        if (!product?._id || !productId) {
+            message.error('Không tìm thấy sản phẩm hợp lệ trong cơ sở dữ liệu.');
+            return;
+        }
 
-  const handleAddToCart = ({ productId, quantity }) => {
-    if (!product || !productId) {
-      message.error("Không tìm thấy sản phẩm!");
-      return;
-    }
+        try {
+            await CartService.addToCart(product._id, Number(quantity) || 1);
+            message.success('Đã thêm sản phẩm vào giỏ hàng!');
+        } catch (error) {
+            if (error.response?.status === 401) {
+                message.warning('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                navigate('/sign-in');
+            } else {
+                message.error(error.response?.data?.message || error.message || 'Không thể thêm sản phẩm vào giỏ hàng.');
+            }
+        }
+    };
 
-    const cart = JSON.parse(
-      localStorage.getItem("novashop_cart") || "[]"
+    const handleBuyNow = ({ productId, quantity }) => {
+        if (!requireLogin()) return;
+        if (!product?._id || !productId) {
+            message.error('Không tìm thấy sản phẩm hợp lệ trong cơ sở dữ liệu.');
+            return;
+        }
+
+        navigate('/payment', {
+            state: {
+                selectedItems: [{
+                    productId: product._id,
+                    name: product.name,
+                    price: Number(product.price),
+                    image: product.images?.[0] || '',
+                    quantity: Number(quantity) || 1
+                }],
+                totalPrice: Number(product.price) * (Number(quantity) || 1)
+            }
+        });
+    };
+
+    return (
+        <ProductDetailsComponent
+            product={product}
+            isLoading={loading}
+            onAddToCart={handleAddToCart}
+            onBuyNow={handleBuyNow}
+        />
     );
-
-    const existingProduct = cart.find(
-      (item) => item.productId === productId
-    );
-
-    if (existingProduct) {
-      existingProduct.quantity += quantity;
-    } else {
-      cart.push({
-        productId,
-        name: product.name,
-        price: product.price,
-        image: product.images?.[0] || "",
-        quantity,
-      });
-    }
-
-    localStorage.setItem("novashop_cart", JSON.stringify(cart));
-
-    message.success("Đã thêm sản phẩm vào giỏ hàng!");
-  };
-
-  const navigate = useNavigate();
-
-  const handleBuyNow = ({ productId, quantity }) => {
-    if (!product || !productId) {
-      return;
-    }
-
-    const selectedItems = [
-      {
-        productId,
-        name: product.name,
-        price: Number(product.price),
-        image: product.images?.[0] || "",
-        quantity: Number(quantity) || 1,
-      },
-    ];
-
-    navigate("/payment", {
-      state: {
-        selectedItems,
-        totalPrice: Number(product.price) * (Number(quantity) || 1),
-      },
-    });
-  };
-
-  return (
-    <ProductDetailsComponent
-      product={product}
-      isLoading={loading}
-      onAddToCart={handleAddToCart}
-      onBuyNow={handleBuyNow}
-    />
-  );
 };
 
 export default ProductDetailsPage;

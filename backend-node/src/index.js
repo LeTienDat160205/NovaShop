@@ -5,6 +5,7 @@ const path = require("path");
 const { default: mongoose } = require("mongoose");
 const productRoutes = require('./routes/ProductRouter');
 const authRoutes = require('./routes/AuthRouter');
+const cartRoutes = require('./routes/CartRouter');
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
@@ -27,6 +28,7 @@ mongoose
 
 app.use('/api/product', productRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/cart', cartRoutes);
 
 app.listen(port, () => {
   console.log("Server đang chạy tại cổng: " + port);
