@@ -1,10 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const path = require("path");
 const { default: mongoose } = require("mongoose");
 const productRoutes = require('./routes/ProductRouter');
+const authRoutes = require('./routes/AuthRouter');
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -24,6 +26,7 @@ mongoose
   });
 
 app.use('/api/product', productRoutes);
+app.use('/api/auth', authRoutes);
 
 app.listen(port, () => {
   console.log("Server đang chạy tại cổng: " + port);

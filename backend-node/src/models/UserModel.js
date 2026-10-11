@@ -8,8 +8,9 @@ const userSchema = new mongoose.Schema(
         role: { type: String, default: 'Customer', enum: ['Guest', 'Customer', 'Admin'] },
         phone: { type: String },
         address: { type: String },
-        avatar: { type: String },
-        city: { type: String }
+        gender: { type: String, enum: ['Nam', 'Nữ', 'Khác', ''], default: '' },
+        dob: { type: Date },
+        avatar: { type: String }
     },
     {
         timestamps: true

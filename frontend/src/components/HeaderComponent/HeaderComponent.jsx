@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Badge, Col } from "antd";
+import { Avatar, Badge, Col, Dropdown } from "antd";
 import {
   CaretDownOutlined,
   ShoppingCartOutlined,
@@ -15,22 +15,55 @@ import {
 import ButtonInputSearch from "../ButtonInputSearch/ButtonInputSearch";
 
 const HeaderComponent = () => {
-  const [query, setQuery] = useState("");
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("novashop_user")) || null;
+    } catch {
+      return null;
+    }
+  });
   const navigate = useNavigate();
 
-  const handleSearch = (value) => {
-    const keyword = value.trim();
+  useEffect(() => {
+    const syncUser = () => {
+      try {
+        const currentUser = JSON.parse(localStorage.getItem("novashop_user")) || null;
+        setUser(currentUser);
+      } catch {
+        setUser(null);
+      }
+    };
 
-    if (keyword) {
-      navigate(`/products?search=${encodeURIComponent(keyword)}`);
-    }
+    syncUser();
+    window.addEventListener("novashop-auth-changed", syncUser);
+
+    return () => {
+      window.removeEventListener("novashop-auth-changed", syncUser);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("novashop_token");
+    localStorage.removeItem("novashop_user");
+    window.dispatchEvent(new Event("novashop-auth-changed"));
+    navigate("/");
   };
 
-  const submitSearch = (event) => {
-    event.preventDefault();
-    if (query.trim())
-      navigate(`/products?search=${encodeURIComponent(query.trim())}`);
+  const userMenu = {
+    items: [
+      {
+        key: "profile",
+        label: "Thông tin",
+        onClick: () => navigate("/profile-user"),
+      },
+      {
+        key: "logout",
+        label: "Đăng xuất",
+        onClick: handleLogout,
+      },
+    ],
   };
+
   return (
     <WrapperHeader>
       <Col span={5}>
@@ -52,30 +85,44 @@ const HeaderComponent = () => {
         span={6}
         style={{ display: "flex", gap: "20px", alignItems: "center" }}
       >
-        <WrapperHeaderAccount>
-          <UserOutlined style={{ fontSize: "30px" }} />
-          <div>
-            <Link
-              to="/sign-in"
-              style={{ color: "#fff", textDecoration: "none" }}
-            >
+        {user ? (
+          <Dropdown menu={userMenu} trigger={["click"]} placement="bottomRight">
+            <WrapperHeaderAccount style={{ position: "relative" }}>
+              <Avatar
+                size={30}
+                icon={<UserOutlined />}
+                style={{ backgroundColor: "#fff", color: "#1a94ff" }}
+              />
               <div>
-                <span>Tài khoản </span>
-                <CaretDownOutlined />
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ color: "#fff", fontWeight: 600 }}>
+                    {user.name || "Tài khoản"}
+                  </span>
+                  <CaretDownOutlined style={{ color: "#fff", fontSize: 12 }} />
+                </div>
               </div>
-              <WrapperTextHeaderSmall>
-                Đăng nhập / Đăng ký
-              </WrapperTextHeaderSmall>
-            </Link>
-          </div>
-        </WrapperHeaderAccount>
+            </WrapperHeaderAccount>
+          </Dropdown>
+        ) : (
+          <WrapperHeaderAccount>
+            <UserOutlined style={{ fontSize: "30px" }} />
+            <div>
+              <Link
+                to="/sign-in"
+                style={{ color: "#fff", textDecoration: "none" }}
+              >
+                <div>
+                  <span>Tài khoản </span>
+                  <CaretDownOutlined />
+                </div>
+                <WrapperTextHeaderSmall>
+                  Đăng nhập / Đăng ký
+                </WrapperTextHeaderSmall>
+              </Link>
+            </div>
+          </WrapperHeaderAccount>
+        )}
 
-        {/* <div>
-          <Badge count={0} size="small" showZero={false}>
-            <ShoppingCartOutlined style={{ fontSize: "30px", color: "#fff" }} />
-          </Badge>
-          <WrapperTextHeaderSmall>Giỏ hàng</WrapperTextHeaderSmall>
-        </div> */}
         <Link
           to="/order"
           style={{

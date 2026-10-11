@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import dayjs from "dayjs";
 import {
   Button,
   Card,
   Form,
   Input,
-  Select,
   Radio,
   Row,
   Col,
@@ -13,8 +13,10 @@ import {
   Typography,
   Divider,
   Space,
+  DatePicker,
   message,
 } from "antd";
+import { updateProfileUser } from "../../services/AuthService";
 
 import {
   UserOutlined,
@@ -33,6 +35,25 @@ const { Title, Text } = Typography;
 const ProfilePage = () => {
   const [form] = Form.useForm();
   const [avatar, setAvatar] = useState(null);
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [phoneValue, setPhoneValue] = useState("");
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const currentUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("novashop_user")) || null;
+    } catch {
+      return null;
+    }
+  })();
+
+  const profileInitialValues = {
+    name: currentUser?.name || "Khách hàng NovaShop",
+    nickname: "",
+    gender: currentUser?.gender || "",
+    address: currentUser?.address || "",
+    phone: currentUser?.phone || "",
+    dob: currentUser?.dob ? dayjs(currentUser.dob) : null,
+  };
 
   const handleAvatarChange = (info) => {
     const file = info.file.originFileObj || info.file;
@@ -50,12 +71,64 @@ const ProfilePage = () => {
     return false;
   };
 
-  const handleSave = (values) => {
-    console.log("Profile:", values);
-    message.info("Chưa kết nối API cập nhật tài khoản");
+  const handleSave = async (values) => {
+    const token = localStorage.getItem("novashop_token");
+
+    if (!token) {
+      message.error("Bạn chưa đăng nhập.");
+      return;
+    }
+
+    try {
+      const response = await updateProfileUser(
+        {
+          name: values.name || currentUser?.name || "Khách hàng NovaShop",
+          address: values.address || "",
+          gender: values.gender || "",
+          dob: values.dob ? values.dob.format("YYYY-MM-DD") : null,
+        },
+        token,
+      );
+
+      const updatedUser = response.user;
+      localStorage.setItem("novashop_user", JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event("novashop-auth-changed"));
+      message.success("Cập nhật thông tin thành công");
+    } catch (error) {
+      message.error(error.response?.data?.message || "Không thể cập nhật thông tin.");
+    }
   };
 
-  const actionItem = (icon, title, description, buttonText, disabled = false) => (
+  const handlePhoneUpdate = async () => {
+    const token = localStorage.getItem("novashop_token");
+    if (!token) {
+      message.error("Bạn chưa đăng nhập.");
+      return;
+    }
+
+    if (!/^0\d{9}$/.test(phoneValue) && !/^\+84\d{9}$/.test(phoneValue)) return;
+
+    setIsSavingPhone(true);
+    try {
+      const response = await updateProfileUser({ phone: phoneValue.trim() }, token);
+      localStorage.setItem("novashop_user", JSON.stringify(response.user));
+      window.dispatchEvent(new Event("novashop-auth-changed"));
+      setPhoneValue(response.user.phone || "");
+      setIsEditingPhone(false);
+      message.success("Cập nhật số điện thoại thành công");
+    } catch (error) {
+      message.error(error.response?.data?.message || "Không thể cập nhật số điện thoại.");
+    } finally {
+      setIsSavingPhone(false);
+    }
+  };
+
+  const startPhoneEdit = () => {
+    setPhoneValue(currentUser?.phone || "");
+    setIsEditingPhone(true);
+  };
+
+  const actionItem = (icon, title, description, buttonText, disabled = false, onClick = () => message.info(`Chức năng ${title} chưa được tích hợp`)) => (
     <div
       style={{
         display: "flex",
@@ -85,7 +158,7 @@ const ProfilePage = () => {
       <Button
         size="small"
         disabled={disabled}
-        onClick={() => message.info(`Chức năng ${title} chưa được tích hợp`)}
+        onClick={onClick}
       >
         {buttonText}
       </Button>
@@ -123,12 +196,7 @@ const ProfilePage = () => {
               wrapperCol={{ flex: 1 }}
               labelAlign="left"
               colon={false}
-              initialValues={{
-                name: "Khách hàng NovaShop",
-                nickname: "",
-                gender: "",
-                nationality: "",
-              }}
+              initialValues={profileInitialValues}
               onFinish={handleSave}
               style={{ marginTop: 24 }}
             >
@@ -187,40 +255,6 @@ const ProfilePage = () => {
                 </Col>
               </Row>
 
-              <Form.Item label="Ngày sinh">
-                <Space.Compact style={{ width: "100%" }}>
-                  <Form.Item name="day" noStyle>
-                    <Select
-                      placeholder="Ngày"
-                      options={Array.from({ length: 31 }, (_, i) => ({
-                        label: i + 1,
-                        value: i + 1,
-                      }))}
-                    />
-                  </Form.Item>
-
-                  <Form.Item name="month" noStyle>
-                    <Select
-                      placeholder="Tháng"
-                      options={Array.from({ length: 12 }, (_, i) => ({
-                        label: i + 1,
-                        value: i + 1,
-                      }))}
-                    />
-                  </Form.Item>
-
-                  <Form.Item name="year" noStyle>
-                    <Select
-                      placeholder="Năm"
-                      options={Array.from({ length: 100 }, (_, i) => {
-                        const year = new Date().getFullYear() - i;
-                        return { label: year, value: year };
-                      })}
-                    />
-                  </Form.Item>
-                </Space.Compact>
-              </Form.Item>
-
               <Form.Item label="Giới tính" name="gender">
                 <Radio.Group>
                   <Radio value="Nam">Nam</Radio>
@@ -229,16 +263,27 @@ const ProfilePage = () => {
                 </Radio.Group>
               </Form.Item>
 
-              <Form.Item label="Quốc tịch" name="nationality">
-                <Select
-                  placeholder="Chọn quốc tịch"
-                  options={[
-                    { label: "Việt Nam", value: "VN" },
-                    { label: "Nhật Bản", value: "JP" },
-                    { label: "Hàn Quốc", value: "KR" },
-                    { label: "Hoa Kỳ", value: "US" },
-                  ]}
+              <Form.Item
+                label="Ngày sinh"
+                name="dob"
+                rules={[
+                  {
+                    validator: (_, value) =>
+                      !value || !value.isAfter(dayjs(), "day")
+                        ? Promise.resolve()
+                        : Promise.reject(new Error("Ngày sinh không được ở tương lai.")),
+                  },
+                ]}
+              >
+                <DatePicker
+                  format="DD/MM/YYYY"
+                  style={{ width: "100%" }}
+                  disabledDate={(date) => date.isAfter(dayjs(), "day")}
                 />
+              </Form.Item>
+
+              <Form.Item label="Địa chỉ" name="address">
+                <Input placeholder="Nhập địa chỉ" />
               </Form.Item>
 
               <Form.Item wrapperCol={{ offset: 0 }}>
@@ -270,17 +315,67 @@ const ProfilePage = () => {
               Số điện thoại và Email
             </Title>
 
-            {actionItem(
-              <PhoneOutlined />,
-              "Số điện thoại",
-              "Chưa cập nhật",
-              "Cập nhật"
-            )}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "14px 0",
+                borderBottom: "1px solid #f0f0f0",
+                gap: 12,
+              }}
+            >
+              <Space align="start" style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 19, color: "#999" }}><PhoneOutlined /></span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Text>Số điện thoại</Text>
+                  {isEditingPhone ? (
+                    <div style={{ marginTop: 6 }}>
+                      <Input
+                        value={phoneValue}
+                        onChange={(event) => setPhoneValue(event.target.value)}
+                        placeholder="0xxxxxxxxx hoặc +84xxxxxxxxx"
+                        maxLength={13}
+                        inputMode="tel"
+                        status={phoneValue && !/^0\d{9}$/.test(phoneValue) && !/^\+84\d{9}$/.test(phoneValue) ? "error" : ""}
+                      />
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        Nhập số 10 chữ số bắt đầu bằng 0 hoặc mã +84.
+                      </Text>
+                    </div>
+                  ) : (
+                    <div>
+                      <Text type="secondary" style={{ fontSize: 13 }}>
+                        {currentUser?.phone || "Chưa cập nhật"}
+                      </Text>
+                    </div>
+                  )}
+                </div>
+              </Space>
+              {isEditingPhone ? (
+                <Space>
+                  <Button size="small" onClick={() => setIsEditingPhone(false)} disabled={isSavingPhone}>
+                    Hủy
+                  </Button>
+                  <Button
+                    size="small"
+                    type="primary"
+                    onClick={handlePhoneUpdate}
+                    loading={isSavingPhone}
+                    disabled={!/^0\d{9}$/.test(phoneValue) && !/^\+84\d{9}$/.test(phoneValue)}
+                  >
+                    Lưu
+                  </Button>
+                </Space>
+              ) : (
+                <Button size="small" onClick={startPhoneEdit}>Cập nhật</Button>
+              )}
+            </div>
 
             {actionItem(
               <MailOutlined />,
               "Địa chỉ email",
-              "customer@novashop.vn",
+              currentUser?.email || "customer@novashop.vn",
               "Cập nhật"
             )}
 
