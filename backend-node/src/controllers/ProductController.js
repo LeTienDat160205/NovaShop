@@ -3,15 +3,35 @@ const Product = require('../models/ProductModel');
 // 1. API Lấy tất cả sản phẩm
 const getAllProduct = async (req, res) => {
     try {
-        const products = await Product.find();
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.min(
+            50,
+            Math.max(1, Number(req.query.limit) || 18)
+        );
+
+        const products = await Product.aggregate([
+            { $sample: { size: page * limit } },
+            { $skip: (page - 1) * limit },
+            { $limit: limit },
+            {
+                $project: {
+                    name: 1,
+                    price: 1,
+                    rating: 1,
+                    images: 1,
+                    brand: 1
+                }
+            }
+        ]);
+
         return res.status(200).json({
-            status: 'OK',
-            message: 'Lấy danh sách sản phẩm thành công',
+            status: "OK",
+            message: "Lấy danh sách sản phẩm thành công",
             data: products
         });
     } catch (e) {
         return res.status(500).json({
-            status: 'ERR',
+            status: "ERR",
             message: e.message
         });
     }
@@ -22,12 +42,14 @@ const getDetailsProduct = async (req, res) => {
     try {
         const productId = req.params.id;
         const product = await Product.findById(productId);
+
         if (!product) {
             return res.status(404).json({
                 status: 'ERR',
                 message: 'Không tìm thấy sản phẩm'
             });
         }
+
         return res.status(200).json({
             status: 'OK',
             data: product
@@ -45,8 +67,9 @@ const getSimilarProducts = async (req, res) => {
     try {
         const productId = req.params.id;
 
-        const currentProduct =
-            await Product.findById(productId).lean();
+        const currentProduct = await Product.findById(productId)
+            .select('name categoryPath specifications brand price')
+            .lean();
 
         if (!currentProduct) {
             return res.status(404).json({
@@ -55,14 +78,8 @@ const getSimilarProducts = async (req, res) => {
             });
         }
 
-        const products = await Product.find({
-            _id: { $ne: currentProduct._id }
-        }).lean();
-
         const normalize = (value) => {
-            if (value === null || value === undefined) {
-                return '';
-            }
+            if (value === null || value === undefined) return '';
 
             return String(value)
                 .toLowerCase()
@@ -74,57 +91,68 @@ const getSimilarProducts = async (req, res) => {
                 .trim();
         };
 
-        // Tách từ trong tên sản phẩm
         const getNameWords = (name) => {
             const stopWords = new Set([
-                'va',
-                'cho',
-                'cua',
-                'loai',
-                'cao',
-                'cap',
-                'chinh',
-                'hang',
-                'new',
-                'moi',
-                'combo'
+                'va', 'cho', 'cua', 'loai', 'cao', 'cap',
+                'chinh', 'hang', 'new', 'moi', 'combo'
             ]);
 
             return new Set(
                 normalize(name)
                     .split(' ')
-                    .filter(
-                        word =>
-                            word.length >= 3 &&
-                            !stopWords.has(word)
-                    )
+                    .filter(word => word.length >= 3 && !stopWords.has(word))
             );
         };
 
-        // Category hiện tại
-        const currentCategories =
-            new Set(
-                (currentProduct.categoryPath || [])
+        // Ưu tiên sản phẩm cùng danh mục cấp cuối
+        const categories = currentProduct.categoryPath || [];
+        const leafCategory = categories.length
+            ? categories[categories.length - 1]
+            : null;
+
+        let candidateFilter;
+
+        if (leafCategory) {
+            candidateFilter = {
+                categoryPath: leafCategory
+            };
+        } else if (currentProduct.brand) {
+            candidateFilter = {
+                brand: currentProduct.brand
+            };
+        } else {
+            // Trường hợp dữ liệu thiếu danh mục và thương hiệu
+            candidateFilter = {};
+        }
+
+        candidateFilter._id = { $ne: currentProduct._id };
+
+        // Chỉ lấy dữ liệu cần thiết, tối đa 300 ứng viên
+        const products = await Product.find(candidateFilter)
+            .select('name categoryPath specifications brand price rating images')
+            .limit(300)
+            .lean();
+
+        const currentCategories = new Set(
+            categories.map(normalize).filter(Boolean)
+        );
+
+        const currentSpecs = currentProduct.specifications || {};
+        const currentSpecEntries = Object.entries(currentSpecs).map(
+            ([key, value]) => [normalize(key), normalize(value)]
+        );
+
+        const currentNameWords = getNameWords(currentProduct.name || '');
+        const currentPrice = Number(currentProduct.price || 0);
+        const currentBrand = normalize(currentProduct.brand);
+
+        const scoredProducts = products.map(product => {
+            // 1. CATEGORY - tối đa 30 điểm
+            const productCategories = new Set(
+                (product.categoryPath || [])
                     .map(normalize)
                     .filter(Boolean)
             );
-
-        // Specifications hiện tại
-        const currentSpecs =
-            currentProduct.specifications || {};
-
-        const currentNameWords =
-            getNameWords(currentProduct.name || '');
-
-        const scoredProducts = products.map(product => {
-
-            // 1. CATEGORY - tối đa 30 điểm
-            const productCategories =
-                new Set(
-                    (product.categoryPath || [])
-                        .map(normalize)
-                        .filter(Boolean)
-                );
 
             let commonCategories = 0;
 
@@ -134,191 +162,100 @@ const getSimilarProducts = async (req, res) => {
                 }
             });
 
-            let categoryScore = 0;
-
-            if (currentCategories.size > 0) {
-                categoryScore =
-                    (commonCategories /
-                        currentCategories.size) * 30;
-            }
+            const categoryScore = currentCategories.size
+                ? (commonCategories / currentCategories.size) * 30
+                : 0;
 
             // 2. SPECIFICATIONS - tối đa 35 điểm
-            const productSpecs =
-                product.specifications || {};
-
-            const currentSpecKeys =
-                Object.keys(currentSpecs);
+            const productSpecs = new Map(
+                Object.entries(product.specifications || {}).map(
+                    ([key, value]) => [normalize(key), normalize(value)]
+                )
+            );
 
             let matchedSpecs = 0;
 
-            currentSpecKeys.forEach(key => {
+            currentSpecEntries.forEach(([key, value]) => {
+                if (!productSpecs.has(key)) return;
 
-                const currentKey = normalize(key);
+                const productValue = productSpecs.get(key);
 
-                const productKey =
-                    Object.keys(productSpecs)
-                        .find(
-                            k => normalize(k) === currentKey
-                        );
-
-                if (!productKey) return;
-
-                const currentValue =
-                    normalize(currentSpecs[key]);
-
-                const productValue =
-                    normalize(productSpecs[productKey]);
-
-                // Giống hoàn toàn
-                if (currentValue === productValue) {
+                if (value === productValue) {
                     matchedSpecs += 1;
-                    return;
-                }
+                } else {
+                    const productWords = new Set(productValue.split(' '));
 
-                // Có từ khóa chung
-                const currentWords =
-                    currentValue.split(' ');
-
-                const productWords =
-                    productValue.split(' ');
-
-                const commonWords =
-                    currentWords.filter(
-                        word =>
-                            word.length >= 2 &&
-                            productWords.includes(word)
-                    );
-
-                if (commonWords.length > 0) {
-                    matchedSpecs += 0.5;
+                    if (value.split(' ').some(
+                        word => word.length >= 2 && productWords.has(word)
+                    )) {
+                        matchedSpecs += 0.5;
+                    }
                 }
             });
 
-            let specScore = 0;
-
-            if (currentSpecKeys.length > 0) {
-                specScore =
-                    (matchedSpecs /
-                        currentSpecKeys.length) * 35;
-            }
+            const specScore = currentSpecEntries.length
+                ? (matchedSpecs / currentSpecEntries.length) * 35
+                : 0;
 
             // 3. TÊN SẢN PHẨM - tối đa 15 điểm
-            const productNameWords =
-                getNameWords(product.name || '');
-
+            const productNameWords = getNameWords(product.name || '');
             let commonNameWords = 0;
 
             currentNameWords.forEach(word => {
-                if (productNameWords.has(word)) {
-                    commonNameWords++;
-                }
+                if (productNameWords.has(word)) commonNameWords++;
             });
 
-            let nameScore = 0;
-
-            if (currentNameWords.size > 0) {
-                nameScore =
-                    (commonNameWords /
-                        currentNameWords.size) * 15;
-            }
+            const nameScore = currentNameWords.size
+                ? (commonNameWords / currentNameWords.size) * 15
+                : 0;
 
             // 4. BRAND - tối đa 10 điểm
-            let brandScore = 0;
-
-            if (
-                currentProduct.brand &&
+            const brandScore =
+                currentBrand &&
                 product.brand &&
-                normalize(currentProduct.brand) ===
-                    normalize(product.brand)
-            ) {
-                brandScore = 10;
-            }
+                currentBrand === normalize(product.brand)
+                    ? 10
+                    : 0;
 
             // 5. PRICE - tối đa 10 điểm
             let priceScore = 0;
+            const productPrice = Number(product.price || 0);
 
-            const currentPrice =
-                Number(currentProduct.price || 0);
-
-            const productPrice =
-                Number(product.price || 0);
-
-            if (
-                currentPrice > 0 &&
-                productPrice > 0
-            ) {
-                const difference =
-                    Math.abs(
-                        currentPrice -
-                        productPrice
-                    );
-
-                const average =
-                    (currentPrice +
-                        productPrice) / 2;
-
+            if (currentPrice > 0 && productPrice > 0) {
                 const differencePercent =
-                    difference / average;
+                    Math.abs(currentPrice - productPrice) /
+                    ((currentPrice + productPrice) / 2);
 
-                if (differencePercent <= 0.1) {
-                    priceScore = 10;
-                } else if (differencePercent <= 0.2) {
-                    priceScore = 8;
-                } else if (differencePercent <= 0.3) {
-                    priceScore = 6;
-                } else if (differencePercent <= 0.5) {
-                    priceScore = 3;
-                }
+                if (differencePercent <= 0.1) priceScore = 10;
+                else if (differencePercent <= 0.2) priceScore = 8;
+                else if (differencePercent <= 0.3) priceScore = 6;
+                else if (differencePercent <= 0.5) priceScore = 3;
             }
 
             const totalScore =
-                categoryScore +
-                specScore +
-                nameScore +
-                brandScore +
-                priceScore;
+                categoryScore + specScore + nameScore +
+                brandScore + priceScore;
 
             return {
                 ...product,
-                similarityScore:
-                    Number(totalScore.toFixed(2))
+                similarityScore: Number(totalScore.toFixed(2))
             };
         });
 
-        // SẮP XẾP
         scoredProducts.sort((a, b) => {
-
-            if (
-                b.similarityScore !==
-                a.similarityScore
-            ) {
-                return (
-                    b.similarityScore -
-                    a.similarityScore
-                );
+            if (b.similarityScore !== a.similarityScore) {
+                return b.similarityScore - a.similarityScore;
             }
 
-            // Nếu điểm giống nhau
-            // ưu tiên rating cao
-            return (
-                Number(b.rating || 0) -
-                Number(a.rating || 0)
-            );
+            return Number(b.rating || 0) - Number(a.rating || 0);
         });
-
-        // Lấy 8 sản phẩm
-        const result =
-            scoredProducts.slice(0, 8);
 
         return res.status(200).json({
             status: 'OK',
-            message:
-                'Lấy sản phẩm tương tự thành công',
-            data: result
+            message: 'Lấy sản phẩm tương tự thành công',
+            data: scoredProducts.slice(0, 8)
         });
-
     } catch (e) {
-
         return res.status(500).json({
             status: 'ERR',
             message: e.message

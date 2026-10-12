@@ -2,8 +2,11 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:3001/api/product';
 
-export const getAllProduct = async () => {
-    const res = await axios.get(`${API_URL}/get-all`);
+export const getAllProduct = async (page = 1, limit = 18) => {
+    const res = await axios.get(`${API_URL}/get-all`, {
+        params: { page, limit }
+    });
+
     return res.data;
 };
 

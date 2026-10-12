@@ -10,7 +10,6 @@ import slider1 from "../../assets/images/slider1.webp";
 import slider2 from "../../assets/images/slider2.webp";
 import slider3 from "../../assets/images/slider3.webp";
 import CardComponent from "../../components/CardComponent/CardComponent";
-import ButtonComponent from "../../components/ButtonComponent/ButtonComponent";
 import * as ProductService from "../../services/ProductService";
 import { useNavigate } from "react-router-dom";
 
@@ -26,11 +25,14 @@ const HomePage = () => {
   };
 
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  // 1 hàng có 6 sản phẩm -> 3 hàng là 18 sản phẩm
+  // Mỗi lần tải 18 sản phẩm, tương ứng 3 hàng nếu mỗi hàng có 6 sản phẩm
   const ITEMS_PER_PAGE = 18;
-  const [limit, setLimit] = useState(ITEMS_PER_PAGE);
+
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const arr = [
     "Điện thoại",
@@ -42,38 +44,77 @@ const HomePage = () => {
     "Thời trang",
   ];
 
-  const fetchAllProducts = async () => {
-    setLoading(true);
+  // Tải sản phẩm theo từng trang
+  const fetchProducts = async (pageNumber = 1) => {
+    if (pageNumber === 1) {
+      setInitialLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
-      const res = await ProductService.getAllProduct();
+      const res = await ProductService.getAllProduct(
+        pageNumber,
+        ITEMS_PER_PAGE
+      );
+
       if (res?.status === "OK") {
-        setProducts(res?.data || []);
+        const newProducts = res.data || [];
+
+        if (pageNumber === 1) {
+          // Lần đầu chỉ hiển thị 18 sản phẩm
+          setProducts(newProducts);
+        } else {
+          // Khi xem thêm, nối sản phẩm mới vào danh sách hiện tại
+          setProducts((prevProducts) => {
+            const existingIds = new Set(
+              prevProducts.map((product) => product._id)
+            );
+
+            const uniqueProducts = newProducts.filter(
+              (product) => !existingIds.has(product._id)
+            );
+
+            return [...prevProducts, ...uniqueProducts];
+          });
+        }
+
+        setPage(pageNumber);
+
+        // Nếu trang vừa tải có ít hơn 18 sản phẩm thì đã hết dữ liệu
+        setHasMore(newProducts.length === ITEMS_PER_PAGE);
       }
     } catch (error) {
       console.error("Lỗi khi tải sản phẩm:", error);
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchAllProducts();
+    fetchProducts(1);
   }, []);
 
-  // Hàm xử lý khi bấm nút "Xem thêm"
+  // Tải thêm 18 sản phẩm khi người dùng nhấn nút
   const handleLoadMore = () => {
-    setLimit((prev) => prev + ITEMS_PER_PAGE);
+    if (!initialLoading && !loadingMore && hasMore) {
+      fetchProducts(page + 1);
+    }
   };
 
   return (
     <>
+      {/* Danh mục sản phẩm */}
       <div style={{ padding: "0 120px" }}>
         <WrapperTypeProduct>
-          {arr.map((item) => {
-            return <TypeProduct name={item} key={item} />;
-          })}
+          {arr.map((item) => (
+            <TypeProduct name={item} key={item} />
+          ))}
         </WrapperTypeProduct>
       </div>
+
+      {/* Nội dung trang chủ */}
       <div
         id="container"
         style={{
@@ -84,16 +125,22 @@ const HomePage = () => {
           boxSizing: "border-box",
         }}
       >
+        {/* Banner */}
         <SliderComponent arrImages={[slider1, slider2, slider3]} />
 
-        {loading ? (
-          <div style={{ textAlign: "center", marginTop: "20px" }}>
+        {/* Danh sách sản phẩm */}
+        {initialLoading ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "30px 0",
+            }}
+          >
             Đang tải sản phẩm...
           </div>
-        ) : (
+        ) : products.length > 0 ? (
           <WrapperProducts>
-            {/* Cắt mảng products chỉ lấy số lượng theo limit */}
-            {products?.slice(0, limit).map((product) => (
+            {products.map((product) => (
               <CardComponent
                 key={product._id}
                 product={product}
@@ -101,10 +148,19 @@ const HomePage = () => {
               />
             ))}
           </WrapperProducts>
+        ) : (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "30px 0",
+            }}
+          >
+            Không có sản phẩm để hiển thị.
+          </div>
         )}
 
-        {/* Nút xem thêm: Chỉ hiện khi số sản phẩm hiện tại ít hơn tổng số sản phẩm trong DB */}
-        {products.length > limit && (
+        {/* Nút xem thêm */}
+        {hasMore && !initialLoading && products.length > 0 && (
           <div
             style={{
               width: "100%",
@@ -115,7 +171,7 @@ const HomePage = () => {
             }}
           >
             <WrapperButtonMore
-              textButton="Xem thêm"
+              textButton={loadingMore ? "Đang tải..." : "Xem thêm"}
               type="default"
               onClick={handleLoadMore}
               styleButton={{
@@ -124,10 +180,26 @@ const HomePage = () => {
                 width: "240px",
                 height: "38px",
                 borderRadius: "4px",
-                cursor: "pointer",
+                cursor: loadingMore ? "not-allowed" : "pointer",
+                opacity: loadingMore ? 0.6 : 1,
               }}
-              styleTextButton={{ fontWeight: 500 }}
+              styleTextButton={{
+                fontWeight: 500,
+              }}
             />
+          </div>
+        )}
+
+        {/* Thông báo khi đã tải hết sản phẩm */}
+        {!hasMore && !initialLoading && products.length > 0 && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "20px 0",
+              color: "#666",
+            }}
+          >
+            Bạn đã xem hết sản phẩm.
           </div>
         )}
       </div>
