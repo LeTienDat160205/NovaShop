@@ -266,32 +266,41 @@ const getSimilarProducts = async (req, res) => {
 // 4. API Lấy danh sách sản phẩm theo thể loại (Category)
 const getProductsByCategory = async (req, res) => {
   try {
-    const { category } = req.query;
+    const { category, search } = req.query;
 
-    if (!category) {
-      return res.status(400).json({
-        status: "ERR",
-        message: "Thiếu tham số category",
+    const andConditions = [];
+
+    // 1. Điều kiện danh mục (nếu không phải là "all")
+    if (category && category !== "all") {
+      const keywords = category.split('|').map(k => k.trim()).filter(Boolean);
+      const orCategoryConditions = [];
+      keywords.forEach(kw => {
+        const regex = new RegExp(kw, "i");
+        orCategoryConditions.push({ group: { $regex: regex } });
+        orCategoryConditions.push({ name: { $regex: regex } });
+        orCategoryConditions.push({ categoryPath: { $regex: regex } });
+      });
+      if (orCategoryConditions.length > 0) {
+        andConditions.push({ $or: orCategoryConditions });
+      }
+    }
+
+    // 2. Điều kiện tìm kiếm theo từ khóa (tên, thương hiệu, nhóm sản phẩm)
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), "i");
+      andConditions.push({
+        $or: [
+          { name: { $regex: searchRegex } },
+          { brand: { $regex: searchRegex } },
+          { group: { $regex: searchRegex } },
+          { categoryPath: { $regex: searchRegex } }
+        ]
       });
     }
 
-    // Tách các từ khóa nếu có dấu gạch đứng (|), ví dụ: "Chuột|Bàn Phím"
-    const keywords = category.split('|').map(k => k.trim()).filter(Boolean);
-    
-    // Tạo mảng điều kiện OR cho từng từ khóa
-    const orConditions = [];
-    keywords.forEach(kw => {
-      const regex = new RegExp(kw, "i");
-      orConditions.push({ group: { $regex: regex } });
-      orConditions.push({ name: { $regex: regex } });
-      orConditions.push({ categoryPath: { $regex: regex } });
-    });
+    const query = andConditions.length > 0 ? { $and: andConditions } : {};
 
-    console.log("--> Đang tìm kiếm category với từ khóa:", keywords);
-
-    const products = await Product.find({ $or: orConditions }).lean();
-
-    console.log(`--> Tìm thấy ${products.length} sản phẩm`);
+    const products = await Product.find(query).lean();
 
     return res.status(200).json({
       status: "OK",

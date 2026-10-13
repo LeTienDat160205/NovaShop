@@ -1,6 +1,5 @@
-// TypeProductPage.jsx
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import * as ProductService from "../../services/ProductService";
 import CardComponent from "../../components/CardComponent/CardComponent";
 import NavbarComponent from "../../components/NavbarComponent/NavbarComponent";
@@ -14,6 +13,8 @@ import {
 
 const TypeProductPage = () => {
   const { type } = useParams();
+  const [searchParams] = useSearchParams();
+  const searchKeyword = searchParams.get("search") || ""; // Lấy từ khóa từ URL
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
@@ -26,14 +27,15 @@ const TypeProductPage = () => {
     maxPrice: null,
   });
 
+  const isAll = type === "all";
   const currentCategory = CATEGORY_LIST.find((c) => c.slug === type);
-  const displayName = currentCategory ? currentCategory.name : type;
-  const keyword = getDbKeywordBySlug(type);
+  const displayName = isAll ? "Tất cả sản phẩm" : (currentCategory ? currentCategory.name : type);
+  const keyword = isAll ? "all" : getDbKeywordBySlug(type);
 
   // Lấy danh sách thương hiệu của category hiện tại
   const availableBrands = useMemo(() => {
-    return getBrandsByCategoryKeyword(keyword);
-  }, [keyword]);
+    return getBrandsByCategoryKeyword(isAll ? "" : keyword);
+  }, [keyword, isAll]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -49,17 +51,17 @@ const TypeProductPage = () => {
     });
   };
 
-  // Reset filter khi đổi category
+  // Reset filter khi đổi category hoặc đổi từ khóa tìm kiếm
   useEffect(() => {
     handleResetFilters();
-  }, [type]);
+  }, [type, searchKeyword]);
 
-  // Fetch dữ liệu từ API
+  // Fetch dữ liệu từ API khi keyword hoặc searchKeyword thay đổi
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const res = await ProductService.getProductByCategory(keyword);
+        const res = await ProductService.getProductByCategory(keyword, searchKeyword);
         if (res?.status === "OK") {
           setProducts(res.data || []);
         } else {
@@ -72,15 +74,13 @@ const TypeProductPage = () => {
       }
     };
 
-    if (keyword) {
-      fetchProducts();
-    }
-  }, [keyword]);
+    fetchProducts();
+  }, [keyword, searchKeyword]);
 
-  // Bộ lọc Client-side
+  // Bộ lọc Client-side (với các filter bên thanh navbar phụ)
   const filteredProducts = useMemo(() => {
     return products.filter((item) => {
-      // 1. Tên sản phẩm
+      // 1. Tên sản phẩm phụ từ navbar (nếu có)
       if (
         filters.name &&
         !item.name?.toLowerCase().includes(filters.name.toLowerCase().trim())
@@ -94,7 +94,7 @@ const TypeProductPage = () => {
       ) {
         return false;
       }
-      // 3. Đánh giá (>= số sao)
+      // 3. Đánh giá
       if (
         filters.rating &&
         Number(item.rating || 0) < Number(filters.rating)
@@ -126,12 +126,19 @@ const TypeProductPage = () => {
         </WrapperNavbar>
 
         <Col span={19}>
-          <h2 style={{ marginBottom: "15px" }}>{displayName}</h2>
+          <div style={{ marginBottom: "15px" }}>
+            <h2>{displayName}</h2>
+            {searchKeyword && (
+              <span style={{ fontSize: "14px", color: "#666" }}>
+                Kết quả tìm kiếm cho: <strong style={{ color: "#0b74e5" }}>"{searchKeyword}"</strong>
+              </span>
+            )}
+          </div>
 
           {loading ? (
             <div>Đang tải sản phẩm...</div>
           ) : filteredProducts.length === 0 ? (
-            <div>Không có sản phẩm nào thuộc thể loại này.</div>
+            <div>Không có sản phẩm nào phù hợp.</div>
           ) : (
             <WrapperProducts>
               {filteredProducts.map((product) => (

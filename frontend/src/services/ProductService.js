@@ -20,9 +20,9 @@ export const getSimilarProducts = async (id) => {
     return res.data;
 };
 
-export const getProductByCategory = async (category) => {
+export const getProductByCategory = async (category, search = "") => {
   const res = await axios.get(`${API_URL}/get-by-category`, {
-    params: { category } // axios sẽ tự động mã hóa chuỗi tiếng Việt chuẩn UTF-8
+    params: { category, search }
   });
   return res.data;
 };

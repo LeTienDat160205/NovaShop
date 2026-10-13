@@ -2,12 +2,20 @@ import styled from "styled-components";
 import ButtonComponent from "../../components/ButtonComponent/ButtonComponent";
 
 export const WrapperTypeProduct = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    justify-content: flex-start;
-    border-bottom: 1px solid red;
-    height: 44px;
+   display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-start;
+  padding: 10px 0;
+  overflow-x: auto;
+  white-space: nowrap;
+
+  /* Ẩn thanh cuộn trình duyệt cho gọn gàng */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 `
 
 export const WrapperButtonMore = styled(ButtonComponent)`

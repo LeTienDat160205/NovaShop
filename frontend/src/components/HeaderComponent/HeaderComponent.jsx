@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Avatar, Badge, Col, Dropdown } from "antd";
 import {
   CaretDownOutlined,
@@ -15,6 +15,10 @@ import {
 import ButtonInputSearch from "../ButtonInputSearch/ButtonInputSearch";
 
 const HeaderComponent = () => {
+  const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [user, setUser] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("novashop_user")) || null;
@@ -22,7 +26,6 @@ const HeaderComponent = () => {
       return null;
     }
   });
-  const navigate = useNavigate();
 
   useEffect(() => {
     const syncUser = () => {
@@ -47,6 +50,24 @@ const HeaderComponent = () => {
     localStorage.removeItem("novashop_user");
     window.dispatchEvent(new Event("novashop-auth-changed"));
     navigate("/");
+  };
+
+  // Xử lý tìm kiếm
+  const handleSearch = () => {
+    const keyword = search.trim();
+    if (!keyword) return;
+
+    // Kiểm tra xem hiện tại có đang ở trang category: /products/:type không
+    const matchCategory = location.pathname.match(/^\/products\/([^/?]+)/);
+    const currentCategory = matchCategory ? matchCategory[1] : null;
+
+    if (currentCategory && currentCategory !== "all") {
+      // Đang ở danh mục (vd: tai nghe, loa...) -> Chỉ tìm kiếm trong danh mục đó
+      navigate(`/products/${currentCategory}?search=${encodeURIComponent(keyword)}`);
+    } else {
+      // Ở trang chủ hoặc nơi khác -> Tìm kiếm toàn sàn (vào trang all hoặc trang tìm kiếm chung)
+      navigate(`/products/all?search=${encodeURIComponent(keyword)}`);
+    }
   };
 
   const userMenu = {
@@ -78,6 +99,9 @@ const HeaderComponent = () => {
           bordered={false}
           placeholder="Tìm kiếm sản phẩm, danh mục hay thương hiệu"
           textButton="Tìm kiếm"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onSearch={handleSearch}
         />
       </Col>
 
