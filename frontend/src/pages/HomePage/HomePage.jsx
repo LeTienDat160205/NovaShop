@@ -98,12 +98,29 @@ const HomePage = () => {
   return (
     <>
       {/* Danh mục sản phẩm */}
-      <div style={{ padding: "0 120px" }}>
-        <WrapperTypeProduct>
-          {CATEGORY_LIST.map((item) => {
-            return <TypeProduct name={item.name} key={item.slug} onClick={() => openCategory(item.slug)}/>;
-          })}
-        </WrapperTypeProduct>
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderBottom: "1px solid #ebebf0",
+          width: "100%",
+        }}
+      >
+        <div
+          style={{
+            padding: "0 120px",
+            display: "flex",
+            alignItems: "center",
+            overflowX: "auto",
+          }}
+        >
+          {CATEGORY_LIST.map((item) => (
+            <TypeProduct
+              name={item.name}
+              key={item.slug}
+              onClick={() => openCategory(item.slug)}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Nội dung trang chủ */}
