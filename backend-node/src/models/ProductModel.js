@@ -4,6 +4,7 @@ const productSchema = new mongoose.Schema(
     {
         name: { type: String, required: true },
         brand: { type: String },
+        group: { type: String },
         categoryPath: { type: Array, default: [] },
         specifications: { type: Object, default: {} }, 
         description: { type: String },
@@ -14,10 +15,12 @@ const productSchema = new mongoose.Schema(
         sourceUrl: { type: String }
     },
     {
-        timestamps: true
+        timestamps: true,
+        strict: false
     }
 );
 productSchema.index({ categoryPath: 1 });
+productSchema.index({ group: 1 });
 
 const Product = mongoose.model("products", productSchema);
 module.exports = Product;

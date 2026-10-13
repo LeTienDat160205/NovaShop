@@ -12,12 +12,13 @@ import slider3 from "../../assets/images/slider3.webp";
 import CardComponent from "../../components/CardComponent/CardComponent";
 import * as ProductService from "../../services/ProductService";
 import { useNavigate } from "react-router-dom";
+import { CATEGORY_LIST } from "../../utils/categoryConfig";
 
 const HomePage = () => {
   const navigate = useNavigate();
 
-  const openCategory = (type) => {
-    navigate(`/products/${type}`);
+  const openCategory = (slug) => {
+    navigate(`/products/${slug}`);
   };
 
   const openProduct = (id) => {
@@ -34,15 +35,6 @@ const HomePage = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const arr = [
-    "Điện thoại",
-    "Laptop",
-    "Máy tính bảng",
-    "Tai nghe",
-    "Đồng hồ thông minh",
-    "Thiết bị gia dụng",
-    "Thời trang",
-  ];
 
   // Tải sản phẩm theo từng trang
   const fetchProducts = async (pageNumber = 1) => {
@@ -108,9 +100,9 @@ const HomePage = () => {
       {/* Danh mục sản phẩm */}
       <div style={{ padding: "0 120px" }}>
         <WrapperTypeProduct>
-          {arr.map((item) => (
-            <TypeProduct name={item} key={item} />
-          ))}
+          {CATEGORY_LIST.map((item) => {
+            return <TypeProduct name={item.name} key={item.slug} onClick={() => openCategory(item.slug)}/>;
+          })}
         </WrapperTypeProduct>
       </div>
 

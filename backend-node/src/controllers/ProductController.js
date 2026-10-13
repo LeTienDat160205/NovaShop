@@ -263,8 +263,54 @@ const getSimilarProducts = async (req, res) => {
     }
 };
 
+// 4. API Lấy danh sách sản phẩm theo thể loại (Category)
+const getProductsByCategory = async (req, res) => {
+  try {
+    const { category } = req.query;
+
+    if (!category) {
+      return res.status(400).json({
+        status: "ERR",
+        message: "Thiếu tham số category",
+      });
+    }
+
+    // Tách các từ khóa nếu có dấu gạch đứng (|), ví dụ: "Chuột|Bàn Phím"
+    const keywords = category.split('|').map(k => k.trim()).filter(Boolean);
+    
+    // Tạo mảng điều kiện OR cho từng từ khóa
+    const orConditions = [];
+    keywords.forEach(kw => {
+      const regex = new RegExp(kw, "i");
+      orConditions.push({ group: { $regex: regex } });
+      orConditions.push({ name: { $regex: regex } });
+      orConditions.push({ categoryPath: { $regex: regex } });
+    });
+
+    console.log("--> Đang tìm kiếm category với từ khóa:", keywords);
+
+    const products = await Product.find({ $or: orConditions }).lean();
+
+    console.log(`--> Tìm thấy ${products.length} sản phẩm`);
+
+    return res.status(200).json({
+      status: "OK",
+      message: "Lấy sản phẩm thành công",
+      total: products.length,
+      data: products,
+    });
+  } catch (e) {
+    console.error("Lỗi getProductsByCategory:", e);
+    return res.status(500).json({
+      status: "ERR",
+      message: e.message,
+    });
+  }
+};
+
 module.exports = {
     getAllProduct,
     getDetailsProduct,
-    getSimilarProducts
+    getSimilarProducts,
+    getProductsByCategory
 };

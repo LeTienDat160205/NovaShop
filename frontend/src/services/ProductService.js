@@ -19,3 +19,10 @@ export const getSimilarProducts = async (id) => {
     const res = await axios.get(`${API_URL}/get-similar/${id}`);
     return res.data;
 };
+
+export const getProductByCategory = async (category) => {
+  const res = await axios.get(`${API_URL}/get-by-category`, {
+    params: { category } // axios sẽ tự động mã hóa chuỗi tiếng Việt chuẩn UTF-8
+  });
+  return res.data;
+};
