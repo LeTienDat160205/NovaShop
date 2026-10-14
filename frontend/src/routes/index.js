@@ -65,6 +65,7 @@ export const routes = [
         path: '/system/admin',
         page: AdminPage,
         isShowHeader: false,
+        isAdmin: true,
     },
     {
         path: '/sign-in',
