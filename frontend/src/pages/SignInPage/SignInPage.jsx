@@ -31,7 +31,12 @@ const SignInPage = () => {
       localStorage.setItem('novashop_token', result.token)
       localStorage.setItem('novashop_user', JSON.stringify(result.user))
       window.dispatchEvent(new Event('novashop-auth-changed'))
-      navigate(location.state?.from || '/', { replace: true });
+      //navigate(location.state?.from || '/', { replace: true });
+      if (result.user.role === "Admin") {
+        navigate("/system/admin", { replace: true });
+    } else {
+        navigate("/", { replace: true });
+    }
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Không thể kết nối máy chủ. Vui lòng thử lại.')
     } finally {

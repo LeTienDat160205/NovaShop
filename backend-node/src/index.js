@@ -13,6 +13,8 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 const app = express();
 const port = process.env.PORT || 3001;
 
+const adminUserRoutes = require('./routes/AdminUserRouter');
+
 app.use(cors());
 app.use(express.json());
 
@@ -31,6 +33,8 @@ app.use('/api/product', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/admin/products', adminProductRoutes);
+
+app.use('/api/admin/users', adminUserRoutes);
 
 app.listen(port, () => {
   console.log("Server đang chạy tại cổng: " + port);
