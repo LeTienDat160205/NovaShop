@@ -50,8 +50,8 @@ const SignUpPage = () => {
         <p>Đăng nhập hoặc tạo tài khoản</p>
         <form onSubmit={handleSubmit}>
         <InputForm style={{marginBottom: '10px'}} placeholder="Họ và tên" name="name" autoComplete="name" value={form.name} onChange={handleChange} required />
-        <InputForm style={{marginBottom: '10px'}} placeholder="abc@gmail.com" type="email" name="email" autoComplete="email" value={form.email} onChange={handleChange} required />
-        <InputForm style={{marginBottom: '10px'}} placeholder="password" type="password" name="password" autoComplete="new-password" value={form.password} onChange={handleChange} minLength={8} required />
+        <InputForm style={{marginBottom: '10px'}} placeholder="Nhập email" type="email" name="email" autoComplete="email" value={form.email} onChange={handleChange} required />
+        <InputForm style={{marginBottom: '10px'}} placeholder="Nhập mật khẩu" type="password" name="password" autoComplete="new-password" value={form.password} onChange={handleChange} minLength={8} required />
         <InputForm placeholder="Xác nhận mật khẩu" type="password" name="confirmPassword" autoComplete="new-password" value={form.confirmPassword} onChange={handleChange} required />
         {error && <Alert message={error} type="error" showIcon style={{ marginTop: 12 }} />}
         <ButtonComponent 

@@ -61,8 +61,8 @@ const SignInPage = () => {
         <p>Đăng nhập hoặc tạo tài khoản</p>
         <form onSubmit={handleSubmit}>
         {success && <Alert message={success} type="success" showIcon style={{ marginBottom: 12 }} />}
-        <InputForm style={{marginBottom: '10px'}} placeholder="abc@gmail.com" type="email" name="email" autoComplete="email" value={form.email} onChange={handleChange} required />
-        <InputForm placeholder="password" type="password" name="password" autoComplete="current-password" value={form.password} onChange={handleChange} required />
+        <InputForm style={{marginBottom: '10px'}} placeholder="Nhập email" type="email" name="email" autoComplete="email" value={form.email} onChange={handleChange} required />
+        <InputForm placeholder="Nhập mật khẩu" type="password" name="password" autoComplete="current-password" value={form.password} onChange={handleChange} required />
         {error && <Alert message={error} type="error" showIcon style={{ marginTop: 12 }} />}
         <ButtonComponent 
             bordered={false}

@@ -4,7 +4,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(authMiddleware.requireCustomer);
 router.get('/', CartController.getCart);
 router.post('/items', CartController.addToCart);
 router.patch('/items/:productId', CartController.updateQuantity);

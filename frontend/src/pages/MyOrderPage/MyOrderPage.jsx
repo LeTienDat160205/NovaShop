@@ -1,6 +1,9 @@
-import React, { useState } from "react";
-import { Button, Card, Tag, Empty, Image, Modal } from "antd";
+import { useEffect, useState } from "react";
+import { Button, Card, Tag, Empty, Image, Modal, Spin, message, Space } from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { getMyOrders } from "../../services/AdminService";
+import { clearAuthSession, getAuthSession } from "../../utils/authSession";
 
 const formatPrice = (price) =>
   `${Number(price).toLocaleString("vi-VN")} ₫`;
@@ -8,20 +11,65 @@ const formatPrice = (price) =>
 const MyOrderPage = () => {
   const navigate = useNavigate();
 
-  const [orders] = useState(() => {
-    try {
-      const savedOrders = JSON.parse(
-        localStorage.getItem("novashop_orders") || "[]"
-      );
-
-      return Array.isArray(savedOrders) ? savedOrders : [];
-    } catch (error) {
-      console.error("Lỗi đọc đơn hàng:", error);
-      return [];
-    }
-  });
-
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    let loadedUserId = "";
+    const fetchOrders = () => {
+      const session = getAuthSession();
+      if (!session.token || session.role !== "Customer") {
+        setOrders([]);
+        loadedUserId = "";
+        setLoading(false);
+        navigate(!session.token ? "/sign-in" : session.role === "Admin" ? "/system/admin" : "/", { replace: true });
+        return;
+      }
+      const requestedUserId = session.userId;
+      if (requestedUserId !== loadedUserId) {
+        setOrders([]);
+        setLoading(true);
+        loadedUserId = requestedUserId;
+      }
+      getMyOrders()
+        .then(result => {
+          if (active && getAuthSession().userId === requestedUserId) {
+            setOrders(result.data || []);
+          }
+        })
+        .catch(error => {
+          if (active) {
+            if (error.status === 401) clearAuthSession();
+            message.error(error.message || "Không thể tải đơn hàng.");
+          }
+        })
+        .finally(() => {
+          if (active) {
+            setLoading(false);
+          }
+        });
+    };
+
+    fetchOrders();
+    const refreshTimer = window.setInterval(fetchOrders, 30000);
+    window.addEventListener("novashop-auth-changed", fetchOrders);
+    window.addEventListener("storage", fetchOrders);
+    return () => {
+      active = false;
+      window.clearInterval(refreshTimer);
+      window.removeEventListener("novashop-auth-changed", fetchOrders);
+      window.removeEventListener("storage", fetchOrders);
+    };
+  }, [navigate]);
+
+  const statusLabel = {
+    Pending: "Chờ xác nhận",
+    Processing: "Đang xử lý",
+    Delivered: "Hoàn tất",
+    Cancelled: "Đã hủy",
+  };
 
   return (
     <main
@@ -31,9 +79,30 @@ const MyOrderPage = () => {
         padding: "24px 120px",
       }}
     >
-      <h2 style={{ marginBottom: 24 }}>Đơn hàng của tôi</h2>
+      <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 24 }}>
+        <h2 style={{ margin: 0 }}>Đơn hàng của tôi</h2>
+        <Button icon={<ReloadOutlined />} onClick={() => {
+          const requestedUserId = getAuthSession().userId;
+          setLoading(true);
+          getMyOrders()
+            .then(result => {
+              const session = getAuthSession();
+              if (session.role === "Customer" && session.userId === requestedUserId) {
+                setOrders(result.data || []);
+              }
+            })
+            .catch(error => message.error(error.message || "Không thể tải đơn hàng."))
+            .finally(() => setLoading(false));
+        }}>
+          Cập nhật trạng thái
+        </Button>
+      </Space>
 
-      {orders.length === 0 ? (
+      {loading ? (
+        <div style={{ display: "flex", justifyContent: "center", padding: 48 }}>
+          <Spin size="large" />
+        </div>
+      ) : orders.length === 0 ? (
         <div
           style={{
             background: "#fff",
@@ -56,10 +125,10 @@ const MyOrderPage = () => {
         orders.map((order) => (
           <Card
             key={order.id}
-            title={`Đơn #${order.id}`}
+            title={`Đơn #${String(order.id).slice(-8).toUpperCase()}`}
             extra={
-              <Tag color="blue">
-                {order.status || "Chờ xác nhận"}
+              <Tag color={order.status === "Delivered" ? "green" : order.status === "Cancelled" ? "red" : "blue"}>
+                {statusLabel[order.status] || order.status || "Chờ xác nhận"}
               </Tag>
             }
             style={{
@@ -147,7 +216,7 @@ const MyOrderPage = () => {
       <Modal
         title={
           selectedOrder
-            ? `Chi tiết đơn hàng #${selectedOrder.id}`
+            ? `Chi tiết đơn hàng #${String(selectedOrder.id).slice(-8).toUpperCase()}`
             : "Chi tiết đơn hàng"
         }
         open={!!selectedOrder}
@@ -170,7 +239,7 @@ const MyOrderPage = () => {
             </p>
 
             <p>
-              <strong>Trạng thái:</strong> {selectedOrder.status}
+              <strong>Trạng thái:</strong> {statusLabel[selectedOrder.status] || selectedOrder.status}
             </p>
 
             <p>

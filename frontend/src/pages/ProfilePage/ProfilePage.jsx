@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import {
   Button,
@@ -17,6 +18,7 @@ import {
   message,
 } from "antd";
 import { updateProfileUser } from "../../services/AuthService";
+import { clearAuthSession, getAuthSession } from "../../utils/authSession";
 
 import {
   UserOutlined,
@@ -33,18 +35,38 @@ import {
 const { Title, Text } = Typography;
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [avatar, setAvatar] = useState(null);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [phoneValue, setPhoneValue] = useState("");
   const [isSavingPhone, setIsSavingPhone] = useState(false);
-  const currentUser = (() => {
-    try {
-      return JSON.parse(localStorage.getItem("novashop_user")) || null;
-    } catch {
-      return null;
-    }
-  })();
+  const currentUser = getAuthSession().user;
+  const [profileUserId] = useState(() => String(currentUser?.id || currentUser?._id || ""));
+
+  const isProfileSessionValid = () => {
+    const session = getAuthSession();
+    if (session.token && session.userId && session.userId === profileUserId) return true;
+    message.warning("Tài khoản đã thay đổi. Vui lòng mở lại trang thông tin.");
+    navigate(!session.token ? "/sign-in" : session.role === "Admin" ? "/system/admin" : "/", { replace: true });
+    return false;
+  };
+
+  useEffect(() => {
+    const verifyProfileSession = () => {
+      const session = getAuthSession();
+      if (!session.token || session.userId !== profileUserId) {
+        navigate(!session.token ? "/sign-in" : session.role === "Admin" ? "/system/admin" : "/", { replace: true });
+      }
+    };
+    verifyProfileSession();
+    window.addEventListener("novashop-auth-changed", verifyProfileSession);
+    window.addEventListener("storage", verifyProfileSession);
+    return () => {
+      window.removeEventListener("novashop-auth-changed", verifyProfileSession);
+      window.removeEventListener("storage", verifyProfileSession);
+    };
+  }, [navigate, profileUserId]);
 
   const profileInitialValues = {
     name: currentUser?.name || "Khách hàng NovaShop",
@@ -72,6 +94,7 @@ const ProfilePage = () => {
   };
 
   const handleSave = async (values) => {
+    if (!isProfileSessionValid()) return;
     const token = localStorage.getItem("novashop_token");
 
     if (!token) {
@@ -95,18 +118,23 @@ const ProfilePage = () => {
       window.dispatchEvent(new Event("novashop-auth-changed"));
       message.success("Cập nhật thông tin thành công");
     } catch (error) {
+      if (error.response?.status === 401) clearAuthSession();
       message.error(error.response?.data?.message || "Không thể cập nhật thông tin.");
     }
   };
 
   const handlePhoneUpdate = async () => {
+    if (!isProfileSessionValid()) return;
     const token = localStorage.getItem("novashop_token");
     if (!token) {
       message.error("Bạn chưa đăng nhập.");
       return;
     }
 
-    if (!/^0\d{9}$/.test(phoneValue) && !/^\+84\d{9}$/.test(phoneValue)) return;
+    if (!/^(0\d{9}|\+84\d{9})$/.test(phoneValue.trim())) {
+      message.error("Số điện thoại phải có dạng 0xxxxxxxxx hoặc +84xxxxxxxxx.");
+      return;
+    }
 
     setIsSavingPhone(true);
     try {
@@ -117,6 +145,7 @@ const ProfilePage = () => {
       setIsEditingPhone(false);
       message.success("Cập nhật số điện thoại thành công");
     } catch (error) {
+      if (error.response?.status === 401) clearAuthSession();
       message.error(error.response?.data?.message || "Không thể cập nhật số điện thoại.");
     } finally {
       setIsSavingPhone(false);

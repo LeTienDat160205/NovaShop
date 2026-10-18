@@ -1,10 +1,12 @@
 
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Form, Input, Radio, Empty } from "antd";
 import { ArrowLeftOutlined, EnvironmentOutlined, EditOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import ModalComponent from "../../components/ModalComponent/ModalComponent";
 import * as message from "../../components/Message/Message";
+import { createOrder } from "../../services/AdminService";
+import { clearAuthSession, getAuthSession } from "../../utils/authSession";
 
 const formatPrice = (price) => `${Number(price || 0).toLocaleString("vi-VN")} ₫`;
 
@@ -12,14 +14,61 @@ const PaymentPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [payment, setPayment] = useState("cod");
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [isOpenModalUpdateInfo, setIsOpenModalUpdateInfo] = useState(false);
     const [form] = Form.useForm();
 
-    const { selectedItems = [] } = location.state || {};
-    const [shippingInfo, setShippingInfo] = useState({
-        name: "Khách hàng NovaShop",
-        phone: "",
-        address: "Hà Nội, Việt Nam"
+    const selectedItems = Array.isArray(location.state?.selectedItems)
+        ? location.state.selectedItems
+        : [];
+    const checkoutUserId = location.state?.checkoutUserId;
+    const session = getAuthSession();
+    const checkoutSessionValid = Boolean(
+        session.token
+        && checkoutUserId
+        && String(checkoutUserId) === session.userId
+        && session.role === "Customer"
+    );
+
+    useEffect(() => {
+        const verifyCheckoutSession = () => {
+            const currentSession = getAuthSession();
+            if (
+                !currentSession.token
+                || !checkoutUserId
+                || currentSession.userId !== String(checkoutUserId)
+                || currentSession.role !== "Customer"
+            ) {
+                message.warning("Tài khoản thanh toán đã thay đổi. Vui lòng bắt đầu lại.");
+                const destination = !currentSession.token
+                    ? "/sign-in"
+                    : currentSession.role === "Admin"
+                        ? "/system/admin"
+                        : "/order";
+                navigate(destination, { replace: true, state: { from: "/order" } });
+            }
+        };
+
+        verifyCheckoutSession();
+        window.addEventListener("novashop-auth-changed", verifyCheckoutSession);
+        window.addEventListener("storage", verifyCheckoutSession);
+        return () => {
+            window.removeEventListener("novashop-auth-changed", verifyCheckoutSession);
+            window.removeEventListener("storage", verifyCheckoutSession);
+        };
+    }, [checkoutUserId, navigate]);
+
+    const [shippingInfo, setShippingInfo] = useState(() => {
+        try {
+            const user = JSON.parse(localStorage.getItem("novashop_user") || "null");
+            return {
+                name: user?.name || "Khách hàng NovaShop",
+                phone: user?.phone || "",
+                address: user?.address || "",
+            };
+        } catch {
+            return { name: "Khách hàng NovaShop", phone: "", address: "" };
+        }
     });
 
     const totalPrice = selectedItems.reduce(
@@ -32,19 +81,76 @@ const PaymentPage = () => {
             setShippingInfo(values);
             setIsOpenModalUpdateInfo(false);
             message.success("Cập nhật thông tin giao hàng thành công");
-        } catch (error) {
+        } catch {
             // Form không hợp lệ, giữ nguyên modal để người dùng sửa.
         }
     };
 
-    const handlePlaceOrder = () => {
+    const handlePlaceOrder = async () => {
+        const currentSession = getAuthSession();
+        if (
+            !currentSession.token
+            || !checkoutUserId
+            || currentSession.userId !== String(checkoutUserId)
+            || currentSession.role !== "Customer"
+        ) {
+            message.error("Phiên thanh toán không hợp lệ. Vui lòng quay lại giỏ hàng.");
+            navigate(currentSession.role === "Admin" ? "/system/admin" : "/order", { replace: true });
+            return;
+        }
         if (!selectedItems.length) {
             message.error("Không có sản phẩm để thanh toán");
             return;
         }
+        if (
+            selectedItems.some(item =>
+                !/^[a-f\d]{24}$/i.test(String(item.productId || ""))
+                || !Number.isInteger(Number(item.quantity))
+                || Number(item.quantity) < 1
+                || Number(item.quantity) > 99
+            )
+        ) {
+            message.error("Thông tin sản phẩm không hợp lệ. Vui lòng tải lại giỏ hàng.");
+            navigate("/order", { replace: true });
+            return;
+        }
+        if (
+            !shippingInfo.name?.trim()
+            || shippingInfo.name.trim().length > 100
+            || !shippingInfo.address?.trim()
+            || shippingInfo.address.trim().length > 300
+            || !/^(0\d{9}|\+84\d{9})$/.test(shippingInfo.phone?.trim() || "")
+        ) {
+            message.error("Vui lòng kiểm tra lại tên, số điện thoại và địa chỉ giao hàng.");
+            return;
+        }
 
-        // Giao diện đã sẵn sàng; cần kết nối API tạo đơn hàng để đặt hàng thực tế.
-        message.info("Chức năng tạo đơn hàng cần được kết nối với API.");
+        setIsSubmitting(true);
+        try {
+            const result = await createOrder({
+                checkoutUserId: String(checkoutUserId),
+                items: selectedItems.map(item => ({
+                    productId: item.productId,
+                    quantity: Number(item.quantity || 1),
+                })),
+                shippingName: shippingInfo.name,
+                shippingPhone: shippingInfo.phone,
+                shippingAddress: shippingInfo.address,
+                paymentMethod: payment === "cod" ? "COD" : "CARD",
+            });
+            navigate("/order-success", { state: { orderId: result.data?.id } });
+        } catch (error) {
+            message.error(error.message || "Không thể tạo đơn hàng.");
+            if (error.status === 401) {
+                clearAuthSession();
+                navigate("/sign-in", { replace: true });
+            } else if (error.status === 403) {
+                const currentSession = getAuthSession();
+                navigate(currentSession.role === "Admin" ? "/system/admin" : "/order", { replace: true });
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const cardStyle = {
@@ -173,7 +279,7 @@ const PaymentPage = () => {
                                 Đã bao gồm thuế VAT nếu có.
                             </div>
 
-                            <Button type="primary" block size="large" onClick={handlePlaceOrder}
+                            <Button type="primary" block size="large" onClick={handlePlaceOrder} loading={isSubmitting} disabled={!checkoutSessionValid}
                                 style={{ marginTop: 20, height: 46, background: "#ee4d2d", borderColor: "#ee4d2d" }}>
                                 Đặt hàng
                             </Button>
@@ -199,7 +305,7 @@ const PaymentPage = () => {
                     </Form.Item>
                     <Form.Item label="Số điện thoại" name="phone" rules={[
                         { required: true, message: "Vui lòng nhập số điện thoại" },
-                        { pattern: /^0\d{9}$/, message: "Số điện thoại phải có 10 chữ số và bắt đầu bằng 0" }
+                        { pattern: /^(0\d{9}|\+84\d{9})$/, message: "Nhập số 0xxxxxxxxx hoặc +84xxxxxxxxx hợp lệ" }
                     ]}>
                         <Input placeholder="Nhập số điện thoại" maxLength={10} />
                     </Form.Item>

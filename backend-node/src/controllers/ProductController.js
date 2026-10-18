@@ -1,4 +1,6 @@
 const Product = require('../models/ProductModel');
+const Review = require('../models/ReviewModel');
+const calculateCombinedRating = require('../utils/calculateCombinedRating');
 
 // 1. API Lấy tất cả sản phẩm
 const getAllProduct = async (req, res) => {
@@ -50,9 +52,28 @@ const getDetailsProduct = async (req, res) => {
             });
         }
 
+        const reviewSummary = await Review.aggregate([
+            { $match: { productId: product._id } },
+            {
+                $group: {
+                    _id: null,
+                    count: { $sum: 1 },
+                    ratingSum: { $sum: '$rating' }
+                }
+            }
+        ]);
+        const summary = reviewSummary[0];
+        const productData = product.toObject();
+        productData.rating = calculateCombinedRating(
+            product.rating,
+            summary?.count,
+            summary?.ratingSum
+        );
+        productData.reviewCount = summary?.count || 0;
+
         return res.status(200).json({
             status: 'OK',
-            data: product
+            data: productData
         });
     } catch (e) {
         return res.status(500).json({

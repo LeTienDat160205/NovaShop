@@ -1,6 +1,7 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { Result, Button } from 'antd';
+import { getAuthSession } from '../../utils/authSession';
 
 /**
  * Guard kiểm tra quyền Admin trên giao diện frontend.
@@ -9,20 +10,28 @@ import { Result, Button } from 'antd';
  * Cơ chế bảo vệ và phân quyền thực sự tuyệt đối nằm ở server backend
  * thông qua authMiddleware.requireAdmin.
  */
+const readSessionUser = () => {
+    const session = getAuthSession();
+    return session.token && session.userId && session.role ? session.user : null;
+};
+
 const AdminRoute = ({ children }) => {
-    let user = null;
-    try {
-        const rawUser = localStorage.getItem('novashop_user');
-        if (rawUser) {
-            user = JSON.parse(rawUser);
-        }
-    } catch (err) {
-        user = null;
-    }
+    const location = useLocation();
+    const [user, setUser] = useState(readSessionUser);
+
+    useEffect(() => {
+        const syncSession = () => setUser(readSessionUser());
+        window.addEventListener('novashop-auth-changed', syncSession);
+        window.addEventListener('storage', syncSession);
+        return () => {
+            window.removeEventListener('novashop-auth-changed', syncSession);
+            window.removeEventListener('storage', syncSession);
+        };
+    }, []);
 
     // Chưa đăng nhập -> chuyển hướng về trang đăng nhập
     if (!user) {
-        return <Navigate to="/sign-in" replace />;
+        return <Navigate to="/sign-in" state={{ from: location.pathname }} replace />;
     }
 
     // Đã đăng nhập nhưng không phải Admin -> hiện trang thông báo 403

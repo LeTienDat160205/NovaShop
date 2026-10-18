@@ -7,6 +7,11 @@ const productRoutes = require('./routes/ProductRouter');
 const authRoutes = require('./routes/AuthRouter');
 const cartRoutes = require('./routes/CartRouter');
 const adminProductRoutes = require('./routes/AdminProductRouter');
+const orderRoutes = require('./routes/OrderRouter');
+const adminDashboardRoutes = require('./routes/AdminDashboardRouter');
+const adminCartRoutes = require('./routes/AdminCartRouter');
+const adminOrderRoutes = require('./routes/AdminOrderRouter');
+const adminReviewRoutes = require('./routes/AdminReviewRouter');
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
@@ -32,7 +37,12 @@ mongoose
 app.use('/api/product', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/admin/products', adminProductRoutes);
+app.use('/api/admin/dashboard', adminDashboardRoutes);
+app.use('/api/admin/carts', adminCartRoutes);
+app.use('/api/admin/orders', adminOrderRoutes);
+app.use('/api/admin/reviews', adminReviewRoutes);
 
 app.use('/api/admin/users', adminUserRoutes);
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Skeleton } from 'antd';
 import { Link } from 'react-router-dom';
 
@@ -164,6 +164,7 @@ const ProductDetailsComponent = ({
         {/* C. Đánh giá — full width */}
         <div style={{ marginTop: 12 }}>
           <ReviewSection
+            productId={product._id}
             rating={product.rating}
             reviewCount={product.reviewCount}
           />

@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DeleteOutlined, MinusOutlined, PlusOutlined, RightOutlined, ShopOutlined } from "@ant-design/icons";
-import { Button, Checkbox, Image, Spin, Empty, message } from "antd";
+import { Button, Checkbox, Image, Spin, Empty, message, Space } from "antd";
 import * as CartService from "../../services/CartService";
+import { clearAuthSession, getAuthSession } from "../../utils/authSession";
 
 const formatPrice = price => `${new Intl.NumberFormat("vi-VN").format(Number(price) || 0)} ₫`;
 
@@ -11,28 +12,61 @@ const OrderPage = () => {
     const [selectedIds, setSelectedIds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [updatingIds, setUpdatingIds] = useState([]);
+    const [cartOwnerId, setCartOwnerId] = useState("");
+    const cartRequestId = useRef(0);
     const navigate = useNavigate();
 
-    const loadCart = async () => {
+    const loadCart = useCallback(async () => {
+        const requestId = ++cartRequestId.current;
+        const session = getAuthSession();
+        if (!session.token || session.role !== "Customer" || !session.userId) {
+            setItems([]);
+            setSelectedIds([]);
+            setCartOwnerId("");
+            setLoading(false);
+            navigate(!session.token ? "/sign-in" : session.role === "Admin" ? "/system/admin" : "/", { replace: true });
+            return;
+        }
+        const requestedUserId = session.userId;
         try {
             setLoading(true);
             const response = await CartService.getCart();
-            setItems(response?.data || []);
+            const currentSession = getAuthSession();
+            if (
+                requestId === cartRequestId.current
+                && currentSession.userId === requestedUserId
+                && currentSession.token
+            ) {
+                setItems(response?.data || []);
+                setSelectedIds([]);
+                setCartOwnerId(requestedUserId);
+            }
         } catch (error) {
-            if (error.response?.status === 401 || !localStorage.getItem("novashop_token")) {
-                message.warning("Vui lòng đăng nhập để xem giỏ hàng.");
+            if (requestId === cartRequestId.current && error.response?.status === 401) {
+                message.warning("Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.");
+                clearAuthSession();
                 navigate("/sign-in", { state: { from: "/order" }, replace: true });
-            } else {
+            } else if (requestId === cartRequestId.current && error.response?.status === 403) {
+                navigate(getAuthSession().role === "Admin" ? "/system/admin" : "/", { replace: true });
+            } else if (requestId === cartRequestId.current) {
                 message.error(error.response?.data?.message || "Không thể tải giỏ hàng.");
             }
         } finally {
-            setLoading(false);
+            if (requestId === cartRequestId.current) setLoading(false);
         }
-    };
+    }, [navigate]);
 
     useEffect(() => {
-        loadCart();
-    }, []);
+        const initialLoad = window.setTimeout(loadCart, 0);
+        window.addEventListener("novashop-auth-changed", loadCart);
+        window.addEventListener("storage", loadCart);
+        return () => {
+            window.clearTimeout(initialLoad);
+            cartRequestId.current += 1;
+            window.removeEventListener("novashop-auth-changed", loadCart);
+            window.removeEventListener("storage", loadCart);
+        };
+    }, [loadCart]);
 
     const updateQuantity = async (productId, quantity) => {
         const nextQuantity = Math.max(1, Math.min(99, Number(quantity) || 1));
@@ -81,7 +115,26 @@ const OrderPage = () => {
             message.warning("Vui lòng chọn ít nhất một sản phẩm để mua hàng.");
             return;
         }
-        navigate("/payment", { state: { selectedItems, totalPrice } });
+        const token = localStorage.getItem("novashop_token");
+        const session = getAuthSession();
+        if (!token || !session.userId) {
+            message.warning("Vui lòng đăng nhập lại trước khi thanh toán.");
+            navigate("/sign-in", { state: { from: "/order" }, replace: true });
+            return;
+        }
+        if (session.role !== "Customer") {
+            message.warning("Chỉ tài khoản khách hàng mới có thể đặt hàng.");
+            navigate(session.role === "Admin" ? "/system/admin" : "/", { replace: true });
+            return;
+        }
+        if (session.userId !== cartOwnerId) {
+            message.warning("Tài khoản vừa thay đổi. Vui lòng tải lại giỏ hàng trước khi thanh toán.");
+            setItems([]);
+            setSelectedIds([]);
+            setCartOwnerId("");
+            return;
+        }
+        navigate("/payment", { state: { selectedItems, totalPrice, checkoutUserId: session.userId } });
     };
 
     if (loading) {
@@ -104,7 +157,10 @@ const OrderPage = () => {
             {items.length === 0 ? (
                 <div style={{ ...cardStyle, padding: "60px 20px", textAlign: "center" }}>
                     <Empty description="Giỏ hàng của bạn đang trống">
-                        <Button type="primary" onClick={() => navigate("/")}>Tiếp tục mua sắm</Button>
+                        <Space wrap>
+                            <Button type="primary" onClick={() => navigate("/")}>Tiếp tục mua sắm</Button>
+                            <Button onClick={() => navigate("/my-order")}>Xem đơn hàng của tôi</Button>
+                        </Space>
                     </Empty>
                 </div>
             ) : (

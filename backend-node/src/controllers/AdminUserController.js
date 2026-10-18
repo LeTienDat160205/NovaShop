@@ -27,13 +27,18 @@ const updateUserRole = async (req, res) => {
         const { id } = req.params;
         const { role } = req.body;
 
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(400).json({
+                message: 'ID tài khoản không hợp lệ.'
+            });
+        }
         if (!['Admin', 'Customer'].includes(role)) {
             return res.status(400).json({
                 message: 'Quyền không hợp lệ.'
             });
         }
 
-        if (id === req.user.id) {
+        if (id.toLowerCase() === req.user.id.toLowerCase()) {
             return res.status(403).json({
                 message: 'Không thể tự thay đổi quyền của mình.'
             });
@@ -73,7 +78,7 @@ const deleteUser = async (req, res) => {
             });
         }
 
-        if (id === req.user.id) {
+        if (id.toLowerCase() === req.user.id.toLowerCase()) {
             return res.status(403).json({
                 message: 'Không thể tự xóa tài khoản của mình.'
             });

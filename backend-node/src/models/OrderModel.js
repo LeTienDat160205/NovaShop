@@ -5,15 +5,21 @@ const orderSchema = new mongoose.Schema(
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         items: [
             {
-                productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+                productId: { type: mongoose.Schema.Types.ObjectId, ref: 'products', required: true },
                 quantity: { type: Number, required: true },
                 price: { type: Number, required: true }
             }
         ],
         totalPrice: { type: Number, required: true },
+        shippingName: { type: String, required: true },
+        shippingPhone: { type: String, required: true },
         shippingAddress: { type: String, required: true },
         paymentMethod: { type: String, required: true }, // 'COD', 'MOMO', 'VNPAY', ...
-        status: { type: String, default: 'Pending' } // 'Pending', 'Processing', 'Delivered', 'Cancelled'
+        status: {
+            type: String,
+            default: 'Pending',
+            enum: ['Pending', 'Processing', 'Delivered', 'Cancelled']
+        }
     },
     {
         timestamps: true

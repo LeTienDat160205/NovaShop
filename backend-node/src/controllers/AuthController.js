@@ -25,14 +25,17 @@ const register = async (req, res) => {
 		const name = typeof rawName === 'string' ? rawName.trim() : '';
 		const email = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : '';
 
-		if (!name || !email || !password) {
+		if (!name || !email || typeof password !== 'string' || !password) {
 			return res.status(400).json({ message: 'Vui lòng nhập đầy đủ họ tên, email và mật khẩu.' });
+		}
+		if (name.length > 100 || email.length > 254) {
+			return res.status(400).json({ message: 'Họ tên hoặc email vượt quá độ dài cho phép.' });
 		}
 		if (!/^\S+@\S+\.\S+$/.test(email)) {
 			return res.status(400).json({ message: 'Email không hợp lệ.' });
 		}
-		if (typeof password !== 'string' || password.length < 8) {
-			return res.status(400).json({ message: 'Mật khẩu phải có ít nhất 8 ký tự.' });
+		if (password.length < 8 || password.length > 128) {
+			return res.status(400).json({ message: 'Mật khẩu phải từ 8 đến 128 ký tự.' });
 		}
 
 		const existingUser = await User.findOne({ email });
@@ -87,22 +90,17 @@ const login = async (req, res) => {
 
 const updateProfile = async (req, res) => {
 	try {
-		const authHeader = req.headers.authorization || '';
-		const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
-
-		if (!token || !process.env.JWT_SECRET) {
-			return res.status(401).json({ message: 'Phiên đăng nhập không hợp lệ.' });
-		}
-
-		const decoded = jwt.verify(token, process.env.JWT_SECRET);
-		const userId = decoded.sub || decoded._id;
+		const userId = req.user.id;
 		const allowedFields = ['name', 'phone', 'address', 'gender', 'dob'];
 		const updateData = {};
 
 		for (const field of allowedFields) {
 			if (req.body[field] !== undefined) {
 				if (field === 'name') {
-					updateData.name = String(req.body.name).trim();
+					if (typeof req.body.name !== 'string') {
+						return res.status(400).json({ message: 'Họ tên không hợp lệ.' });
+					}
+					updateData.name = req.body.name.trim();
 				} else if (field === 'phone') {
 					const phone = typeof req.body.phone === 'string' ? req.body.phone.trim() : '';
 					if (phone && !/^(0\d{9}|\+84\d{9})$/.test(phone)) {
@@ -110,9 +108,15 @@ const updateProfile = async (req, res) => {
 					}
 					updateData.phone = phone;
 				} else if (field === 'address') {
-					updateData.address = String(req.body.address).trim();
+					if (typeof req.body.address !== 'string') {
+						return res.status(400).json({ message: 'Địa chỉ không hợp lệ.' });
+					}
+					updateData.address = req.body.address.trim();
 				} else if (field === 'gender') {
-					updateData.gender = String(req.body.gender).trim();
+					if (typeof req.body.gender !== 'string') {
+						return res.status(400).json({ message: 'Giới tính không hợp lệ.' });
+					}
+					updateData.gender = req.body.gender.trim();
 				} else if (field === 'dob') {
 					if (req.body.dob === null || req.body.dob === '') {
 						updateData.dob = null;
@@ -145,8 +149,18 @@ const updateProfile = async (req, res) => {
 			}
 		}
 
-		if (!updateData.name && !updateData.phone && !updateData.address && !updateData.gender && !updateData.dob) {
+		if (!Object.keys(updateData).length) {
 			return res.status(400).json({ message: 'Không có dữ liệu để cập nhật.' });
+		}
+
+		if (updateData.name !== undefined && (!updateData.name || updateData.name.length > 100)) {
+			return res.status(400).json({ message: 'Họ tên không hợp lệ.' });
+		}
+		if (updateData.address !== undefined && updateData.address.length > 300) {
+			return res.status(400).json({ message: 'Địa chỉ không được vượt quá 300 ký tự.' });
+		}
+		if (updateData.gender !== undefined && !['Nam', 'Nữ', 'Khác', ''].includes(updateData.gender)) {
+			return res.status(400).json({ message: 'Giới tính không hợp lệ.' });
 		}
 
 		const user = await User.findByIdAndUpdate(userId, updateData, { new: true, runValidators: true });
@@ -160,9 +174,6 @@ const updateProfile = async (req, res) => {
 		});
 	} catch (error) {
 		console.error('Update profile error:', error);
-		if (error.name === 'JsonWebTokenError') {
-			return res.status(401).json({ message: 'Token không hợp lệ.' });
-		}
 		return res.status(500).json({ message: 'Không thể cập nhật tài khoản lúc này.' });
 	}
 };
