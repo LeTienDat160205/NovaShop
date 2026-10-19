@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const interactionSchema = new mongoose.Schema(
     {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-        productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+        productId: { type: mongoose.Schema.Types.ObjectId, ref: 'products', required: true },
         type: { type: String, required: true } // Ví dụ: 'view', 'cart', 'buy', 'like'
     },
     {

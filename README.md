@@ -421,4 +421,17 @@ Các thao tác tạo, sửa và xóa trong khu vực quản trị hiện chỉ c
 
 Các giao diện và luồng chính của website đã được xây dựng, bao gồm mua sắm, giỏ hàng, thanh toán, đơn hàng và quản trị.
 
-Các phần backend, cơ sở dữ liệu, xác thực người dùng, thanh toán trực tuyến và hệ thống gợi ý sản phẩm hiện chưa được kết nối với frontend trong phiên bản hiện tại.
+Thanh toán trực tuyến chưa được tích hợp. Rating sản phẩm có thể gộp từ đánh giá NovaShop và dữ liệu nguồn; mô hình gợi ý cá nhân hóa vẫn cần được huấn luyện và đánh giá riêng.
+
+## Nạp rating tham khảo
+
+`rec-engine-python/import_review_ratings.py` kiểm tra ánh xạ `product_id` trong file đánh giá sang `item_id` trong catalog và collection MongoDB `products`. Script mặc định chỉ chạy dry-run. Để ghi dữ liệu, truyền thêm `--apply`; ratings sẽ được lưu trong collection `datasetratings`, không tạo tài khoản giả trong `users`.
+
+```bash
+pip install -r .\rec-engine-python\requirements.txt
+python .\rec-engine-python\import_review_ratings.py --reviews "D:\Documents\Đồ án chuyên ngành\ReviewClean.xlsx" --products-json .\frontend\src\data\products.json
+```
+
+Sau khi xem báo cáo ánh xạ, có thể chạy lại với `--apply` để nạp ratings đã ghép được. Script dùng `MONGODB_URI` nếu được cấu hình; nếu không, nó đọc `MONGO_DB` từ `backend-node/.env`. Nên dùng tài khoản MongoDB chỉ có quyền đọc khi dry-run và chỉ cấp quyền ghi khi chủ động nạp dữ liệu.
+
+Điểm và số lượt trên website được tổng hợp từ `datasetratings` và đánh giá NovaShop. Vì chưa có ánh xạ giữa `customer_id` của tập dữ liệu với tài khoản NovaShop, đây là tổng lượt đánh giá giữa hai nguồn; không thể khử trùng lặp cùng một người giữa hai nguồn. Bình luận chi tiết chỉ đến từ đánh giá trên NovaShop.

@@ -64,10 +64,17 @@ const CardComponent = ({ product, onClick }) => {
       <StyleNameProduct>{product?.name || "Tên sản phẩm"}</StyleNameProduct>
 
       <WrapperReportText>
-        <span style={{ marginRight: "4px" }}>
-          <span>{product?.rating || 5}</span>
-          <StarFilled style={{ fontSize: "12px", color: "orange" }} />
-        </span>
+        {Number(product?.rating) > 0 && (
+          <span style={{ marginRight: "4px" }}>
+            <span>{Number(product.rating).toFixed(1)}</span>
+            <StarFilled style={{ fontSize: "12px", color: "orange" }} />
+          </span>
+        )}
+        {product?.reviewCount > 0 && (
+          <span style={{ marginRight: "4px" }}>
+            ({Number(product.reviewCount).toLocaleString("vi-VN")} đánh giá)
+          </span>
+        )}
         <WrapperStyleTextSell>
           | Đã bán {product?.selled || product?.sold || 0}
         </WrapperStyleTextSell>

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Product = require('../models/ProductModel');
 const Review = require('../models/ReviewModel');
-const calculateCombinedRating = require('../utils/calculateCombinedRating');
+const getProductRatingSummaries = require('../utils/getProductRatingSummaries');
 
 const getProductReviews = async (req, res) => {
     try {
@@ -13,29 +13,14 @@ const getProductReviews = async (req, res) => {
         const product = await Product.findById(productId).select('rating').lean();
         if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm.' });
 
-        const [reviews, summary] = await Promise.all([
+        const [reviews, ratingSummary] = await Promise.all([
             Review.find({ productId })
                 .populate('userId', 'name')
                 .sort({ createdAt: -1 })
                 .lean(),
-            Review.aggregate([
-                { $match: { productId: new mongoose.Types.ObjectId(productId) } },
-                {
-                    $group: {
-                        _id: null,
-                        count: { $sum: 1 },
-                        ratingSum: { $sum: '$rating' },
-                        ratings: { $push: '$rating' }
-                    }
-                }
-            ])
+            getProductRatingSummaries([product])
         ]);
-
-        const ratingCounts = [1, 2, 3, 4, 5].reduce((counts, rating) => {
-            counts[rating] = 0;
-            return counts;
-        }, {});
-        for (const rating of summary[0]?.ratings || []) ratingCounts[rating] += 1;
+        const summary = ratingSummary.get(String(product._id));
 
         return res.status(200).json({
             data: {
@@ -47,13 +32,11 @@ const getProductReviews = async (req, res) => {
                     date: review.createdAt
                 })),
                 summary: {
-                    count: summary[0]?.count || 0,
-                    average: calculateCombinedRating(
-                        product.rating,
-                        summary[0]?.count,
-                        summary[0]?.ratingSum
-                    ),
-                    ratingCounts
+                    count: summary.count,
+                    average: summary.average,
+                    ratingCounts: summary.ratingCounts,
+                    datasetCount: summary.datasetCount,
+                    novaShopCount: summary.novaShopCount
                 }
             }
         });

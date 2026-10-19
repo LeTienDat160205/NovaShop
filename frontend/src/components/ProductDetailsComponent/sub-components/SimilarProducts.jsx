@@ -135,6 +135,11 @@ const SimilarProductsPlaceholder = ({ productId }) => {
 
                                     <SimilarProductRating>
                                         {renderStars(product.rating)}
+                                        {product.reviewCount > 0 && (
+                                            <span style={{ marginLeft: 6, color: '#666' }}>
+                                                ({Number(product.reviewCount).toLocaleString('vi-VN')})
+                                            </span>
+                                        )}
                                     </SimilarProductRating>
 
                                     <SimilarProductPrice>

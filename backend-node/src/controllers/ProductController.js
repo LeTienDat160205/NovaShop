@@ -1,6 +1,5 @@
 const Product = require('../models/ProductModel');
-const Review = require('../models/ReviewModel');
-const calculateCombinedRating = require('../utils/calculateCombinedRating');
+const getProductRatingSummaries = require('../utils/getProductRatingSummaries');
 
 // 1. API Lấy tất cả sản phẩm
 const getAllProduct = async (req, res) => {
@@ -25,11 +24,17 @@ const getAllProduct = async (req, res) => {
                 }
             }
         ]);
+        const ratingSummaries = await getProductRatingSummaries(products);
+        const productsWithRatings = products.map(product => ({
+            ...product,
+            rating: ratingSummaries.get(String(product._id))?.average || 0,
+            reviewCount: ratingSummaries.get(String(product._id))?.count || 0
+        }));
 
         return res.status(200).json({
             status: "OK",
             message: "Lấy danh sách sản phẩm thành công",
-            data: products
+            data: productsWithRatings
         });
     } catch (e) {
         return res.status(500).json({
@@ -52,24 +57,13 @@ const getDetailsProduct = async (req, res) => {
             });
         }
 
-        const reviewSummary = await Review.aggregate([
-            { $match: { productId: product._id } },
-            {
-                $group: {
-                    _id: null,
-                    count: { $sum: 1 },
-                    ratingSum: { $sum: '$rating' }
-                }
-            }
-        ]);
-        const summary = reviewSummary[0];
+        const ratingSummary = (await getProductRatingSummaries([product]))
+            .get(String(product._id));
         const productData = product.toObject();
-        productData.rating = calculateCombinedRating(
-            product.rating,
-            summary?.count,
-            summary?.ratingSum
-        );
-        productData.reviewCount = summary?.count || 0;
+        productData.rating = ratingSummary.average;
+        productData.reviewCount = ratingSummary.count;
+        productData.datasetReviewCount = ratingSummary.datasetCount;
+        productData.novaShopReviewCount = ratingSummary.novaShopCount;
 
         return res.status(200).json({
             status: 'OK',
@@ -271,10 +265,18 @@ const getSimilarProducts = async (req, res) => {
             return Number(b.rating || 0) - Number(a.rating || 0);
         });
 
+        const recommendations = scoredProducts.slice(0, 8);
+        const ratingSummaries = await getProductRatingSummaries(recommendations);
+        const recommendationsWithRatings = recommendations.map(product => ({
+            ...product,
+            rating: ratingSummaries.get(String(product._id))?.average || 0,
+            reviewCount: ratingSummaries.get(String(product._id))?.count || 0
+        }));
+
         return res.status(200).json({
             status: 'OK',
             message: 'Lấy sản phẩm tương tự thành công',
-            data: scoredProducts.slice(0, 8)
+            data: recommendationsWithRatings
         });
     } catch (e) {
         return res.status(500).json({
@@ -322,12 +324,21 @@ const getProductsByCategory = async (req, res) => {
     const query = andConditions.length > 0 ? { $and: andConditions } : {};
 
     const products = await Product.find(query).lean();
+    const ratingSummaries = await getProductRatingSummaries(products);
+    const productsWithRatings = products.map(product => {
+      const summary = ratingSummaries.get(String(product._id));
+      return {
+        ...product,
+        rating: summary?.average || 0,
+        reviewCount: summary?.count || 0
+      };
+    });
 
     return res.status(200).json({
       status: "OK",
       message: "Lấy sản phẩm thành công",
-      total: products.length,
-      data: products,
+      total: productsWithRatings.length,
+      data: productsWithRatings,
     });
   } catch (e) {
     console.error("Lỗi getProductsByCategory:", e);
