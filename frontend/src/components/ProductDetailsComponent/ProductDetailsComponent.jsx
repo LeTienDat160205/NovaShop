@@ -25,7 +25,7 @@ import PurchaseBox from './sub-components/PurchaseBox';
 import ReviewSection from './sub-components/ReviewSection';
 import TopDeals from './sub-components/TopDeals';
 import RecentlyViewed from './sub-components/RecentlyViewed';
-import ExploreMore from './sub-components/ExploreMore';
+import RecommendedProducts from '../RecommendedProducts/RecommendedProducts';
 import ButtonComponent from '../ButtonComponent/ButtonComponent';
 import FavoriteButton from '../FavoriteButton/FavoriteButton';
 
@@ -178,7 +178,7 @@ const ProductDetailsComponent = ({
         {/* D. Các khối full-width */}
         <TopDeals currentProductId={product?._id} />
         <RecentlyViewed currentProductId={product?._id}/>
-        <ExploreMore currentProductId={product?._id}/>
+        <RecommendedProducts limit={8} excludeProductId={product?._id} />
       </ContentWrapper>
 
       {/* Mobile: Thanh mua hàng sticky ở đáy */}

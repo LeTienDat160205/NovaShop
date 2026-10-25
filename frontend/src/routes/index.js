@@ -15,6 +15,7 @@ import AdminPage from "../pages/AdminPage/AdminPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgorPasswordpage";
 import ResetPasswordPage from "../pages/ForgotPasswordPage/ResetPasswordPage";
 import FavoritesPage from "../pages/FavoritesPage/FavoritesPage";
+import RecommendationListPage from "../pages/RecommendationListPage/RecommendationListPage";
 
 
 export const routes = [
@@ -36,6 +37,11 @@ export const routes = [
     {
         path: '/products/:type',
         page: TypeProductPage,
+        isShowHeader: true,
+    },
+    {
+        path: '/recommendations/:type',
+        page: RecommendationListPage,
         isShowHeader: true,
     },
     {

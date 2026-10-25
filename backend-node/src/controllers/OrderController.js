@@ -3,6 +3,7 @@ const Cart = require('../models/CartModel');
 const Order = require('../models/OrderModel');
 const { refreshCartPrices } = require('../utils/cartUtils');
 const { createMomoPayment, verifyMomoIpn, getMomoConfig } = require('../utils/momoPayment');
+const recordInteraction = require('../utils/recordInteraction');
 
 const formatOrder = (order) => ({
     id: order._id.toString(),
@@ -135,6 +136,11 @@ const createOrder = async (req, res) => {
             paymentStatus: paymentMethod === 'MOMO' ? 'Pending' : 'NotRequired',
             status: 'Pending'
         });
+        if (paymentMethod === 'COD') {
+            await Promise.all(orderItems.map(item =>
+                recordInteraction(req.user.id, item.productId, 'purchase')
+            ));
+        }
 
         if (paymentMethod === 'MOMO') {
             try {
@@ -268,6 +274,9 @@ const handleMomoIpn = async (req, res) => {
             if (!updatedOrder) {
                 return res.status(409).json({ resultCode: 1, message: 'Trạng thái đơn hàng đã thay đổi.' });
             }
+            await Promise.all(updatedOrder.items.map(item =>
+                recordInteraction(updatedOrder.userId, item.productId, 'purchase')
+            ));
             await removeOrderedItemsFromCart(updatedOrder.userId, updatedOrder.items);
         } else if (order.paymentStatus === 'Pending') {
             order.paymentStatus = 'Failed';

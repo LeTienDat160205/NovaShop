@@ -6,6 +6,7 @@ import * as CartService from "../../services/CartService";
 import ProductDetailsComponent from '../../components/ProductDetailsComponent/ProductDetailsComponent';
 import { getMockProductDetail } from '../../data/mockProductDetail';
 import { getAuthSession } from '../../utils/authSession';
+import { recordProductView } from '../../services/InteractionService';
 
 const USE_MOCK_FALLBACK = false;
 
@@ -14,6 +15,13 @@ const ProductDetailsPage = () => {
     const navigate = useNavigate();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [authRevision, setAuthRevision] = useState(0);
+
+    useEffect(() => {
+        const refreshAuth = () => setAuthRevision(revision => revision + 1);
+        window.addEventListener('novashop-auth-changed', refreshAuth);
+        return () => window.removeEventListener('novashop-auth-changed', refreshAuth);
+    }, []);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -33,6 +41,13 @@ const ProductDetailsPage = () => {
         };
         fetchProduct();
     }, [id]);
+
+    useEffect(() => {
+        if (!product?._id || !getAuthSession().token) return;
+        recordProductView(product._id).catch(error => {
+            console.error('Không thể ghi nhận lượt xem sản phẩm:', error);
+        });
+    }, [product?._id, authRevision]);
 
     const requireLogin = () => {
         if (localStorage.getItem('novashop_token')) return true;

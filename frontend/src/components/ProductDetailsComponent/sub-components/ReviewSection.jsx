@@ -163,14 +163,6 @@ const ReviewSection = ({ productId }) => {
           })}
         </RatingBarContainer>
       </ReviewOverviewWrapper>
-      {(summary.datasetCount > 0 || summary.novaShopCount > 0) && (
-        <div style={{ marginTop: 10, fontSize: 12, color: token.colorTextSecondary }}>
-          Điểm và số lượt đánh giá được gộp từ {Number(summary.datasetCount || 0).toLocaleString('vi-VN')} đánh giá dữ liệu tham khảo
-          {' '}và {Number(summary.novaShopCount || 0).toLocaleString('vi-VN')} đánh giá trên NovaShop.
-          {' '}Bình luận hiển thị bên dưới là đánh giá trên NovaShop.
-        </div>
-      )}
-
       <div style={{ marginTop: 20, padding: 16, borderRadius: 8, background: '#f7f8fa' }}>
         <div style={{ fontWeight: 600, marginBottom: 8 }}>Chia sẻ đánh giá của bạn</div>
         {session.role === 'Customer' && session.token ? (

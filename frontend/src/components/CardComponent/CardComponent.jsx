@@ -1,4 +1,3 @@
-import React from "react";
 import {
   StyleNameProduct,
   WrapperCardStyle,
@@ -27,6 +26,11 @@ const CardComponent = ({ product, onClick }) => {
     product?.image ||
     (Array.isArray(product?.images) && product?.images[0]) ||
     "https://via.placeholder.com/200";
+  const currentPrice = Number(product?.price) || 0;
+  const listPrice = Number(product?.listPrice ?? product?.list_price) || 0;
+  const discountPercent = listPrice > currentPrice && currentPrice > 0
+    ? Math.round(((listPrice - currentPrice) / listPrice) * 100)
+    : 0;
 
   return (
     <WrapperCardStyle
@@ -39,11 +43,7 @@ const CardComponent = ({ product, onClick }) => {
         <img
           draggable={false}
           alt={product?.name || "Product Image"}
-          src={
-            product?.image ||
-            product?.images?.[0] ||
-            "https://via.placeholder.com/200"
-          }
+          src={productImage}
           style={{ height: "200px", objectFit: "cover" }}
         />
       }
@@ -82,14 +82,19 @@ const CardComponent = ({ product, onClick }) => {
 
       <WrapperPriceText>
         <span style={{ marginRight: "8px" }}>
-          {product?.price
-            ? `${product.price.toLocaleString("vi-VN")} đ`
-            : "0 đ"}
+          {currentPrice.toLocaleString("vi-VN")} đ
         </span>
-        {product?.discount ? (
-          <WrapperDiscountText>-{product.discount}%</WrapperDiscountText>
-        ) : null}
+        {discountPercent > 0 && (
+          <WrapperDiscountText>-{discountPercent}%</WrapperDiscountText>
+        )}
       </WrapperPriceText>
+      {discountPercent > 0 && (
+        <div style={{ marginTop: 2, color: '#85858f', fontSize: 11 }}>
+          <span style={{ textDecoration: 'line-through' }}>
+            {listPrice.toLocaleString('vi-VN')} đ
+          </span>
+        </div>
+      )}
     </WrapperCardStyle>
   );
 };

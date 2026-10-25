@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   SectionCard,
   CardTitle,
@@ -9,11 +9,12 @@ import {
 import CardComponent from '../../CardComponent/CardComponent';
 import * as ProductService from '../../../services/ProductService';
 
-const TABS = ['Dành cho bạn', 'Mới nhất'];
+const RECOMMENDATIONS_TAB = 'Gợi ý cho bạn';
+const TABS = [RECOMMENDATIONS_TAB, 'Mới nhất'];
 const PRODUCT_LIMIT = 12;
 
 const ExploreMore = ({ currentProductId }) => {
-  const [activeTab, setActiveTab] = useState('Dành cho bạn');
+  const [activeTab, setActiveTab] = useState(RECOMMENDATIONS_TAB);
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -22,8 +23,12 @@ const ExploreMore = ({ currentProductId }) => {
       try {
         setIsLoading(true);
 
-        // Dùng ProductService có sẵn của project
-        const response = await ProductService.getAllProduct();
+        const response = activeTab === RECOMMENDATIONS_TAB
+          ? await ProductService.getRecommendations(
+            PRODUCT_LIMIT,
+            currentProductId
+          )
+          : await ProductService.getAllProduct();
 
         if (response?.status !== 'OK') {
           setProducts([]);
@@ -32,32 +37,18 @@ const ExploreMore = ({ currentProductId }) => {
 
         const allProducts = response.data || [];
 
-        // Không hiển thị sản phẩm hiện tại
         const filteredProducts = allProducts.filter(
           (product) => product._id !== currentProductId
         );
-
-        let resultProducts = [];
-
-        if (activeTab === 'Dành cho bạn') {
-          // Tạm thời: ưu tiên sản phẩm có rating cao
-          resultProducts = [...filteredProducts]
-            .sort(
-              (a, b) =>
-                (Number(b.rating) || 0) -
-                (Number(a.rating) || 0)
-            )
-            .slice(0, PRODUCT_LIMIT);
-        } else {
-          // Sản phẩm mới nhất
-          resultProducts = [...filteredProducts]
+        const resultProducts = activeTab === RECOMMENDATIONS_TAB
+          ? allProducts.slice(0, PRODUCT_LIMIT)
+          : [...filteredProducts]
             .sort(
               (a, b) =>
                 new Date(b.createdAt || 0).getTime() -
                 new Date(a.createdAt || 0).getTime()
             )
             .slice(0, PRODUCT_LIMIT);
-        }
 
         setProducts(resultProducts);
       } catch (error) {

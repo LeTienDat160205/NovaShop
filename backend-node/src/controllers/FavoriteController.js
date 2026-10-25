@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Product = require('../models/ProductModel');
 const User = require('../models/UserModel');
+const recordInteraction = require('../utils/recordInteraction');
 
 const getFavorites = async (req, res) => {
     try {
@@ -45,6 +46,7 @@ const addFavorite = async (req, res) => {
         if (!product) return res.status(404).json({ message: 'Không tìm thấy sản phẩm.' });
 
         await User.findByIdAndUpdate(req.user.id, { $addToSet: { favorites: productId } });
+        await recordInteraction(req.user.id, productId, 'favorite');
         return res.status(200).json({ message: 'Đã thêm vào danh sách yêu thích.' });
     } catch (error) {
         console.error('Add favorite error:', error);

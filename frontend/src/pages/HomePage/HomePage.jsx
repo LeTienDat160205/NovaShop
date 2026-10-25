@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import TypeProduct from "../../components/TypeProduct/TypeProduct";
 import {
-  WrapperTypeProduct,
   WrapperButtonMore,
   WrapperProducts,
 } from "./style";
@@ -10,12 +9,24 @@ import slider1 from "../../assets/images/slider1.webp";
 import slider2 from "../../assets/images/slider2.webp";
 import slider3 from "../../assets/images/slider3.webp";
 import CardComponent from "../../components/CardComponent/CardComponent";
+import RecommendedProducts from "../../components/RecommendedProducts/RecommendedProducts";
+import TopDeals from "../../components/ProductDetailsComponent/sub-components/TopDeals";
 import * as ProductService from "../../services/ProductService";
 import { useNavigate } from "react-router-dom";
 import { CATEGORY_LIST } from "../../utils/categoryConfig";
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const [dealProductIds, setDealProductIds] = useState([]);
+  const [recommendedProductIds, setRecommendedProductIds] = useState([]);
+
+  const handleDealProductIdsChange = useCallback(ids => {
+    setDealProductIds(ids);
+  }, []);
+
+  const handleRecommendedProductIdsChange = useCallback(ids => {
+    setRecommendedProductIds(ids);
+  }, []);
 
   const openCategory = (slug) => {
     navigate(`/products/${slug}`);
@@ -38,9 +49,7 @@ const HomePage = () => {
 
   // Tải sản phẩm theo từng trang
   const fetchProducts = async (pageNumber = 1) => {
-    if (pageNumber === 1) {
-      setInitialLoading(true);
-    } else {
+    if (pageNumber > 1) {
       setLoadingMore(true);
     }
 
@@ -85,7 +94,11 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    fetchProducts(1);
+    let active = true;
+    Promise.resolve().then(() => {
+      if (active) fetchProducts(1);
+    });
+    return () => { active = false; };
   }, []);
 
   // Tải thêm 18 sản phẩm khi người dùng nhấn nút
@@ -94,6 +107,11 @@ const HomePage = () => {
       fetchProducts(page + 1);
     }
   };
+
+  const visibleProducts = products.filter(product => (
+    !dealProductIds.includes(product._id)
+    && !recommendedProductIds.includes(product._id)
+  ));
 
   return (
     <>
@@ -137,8 +155,41 @@ const HomePage = () => {
         {/* Banner */}
         <SliderComponent arrImages={[slider1, slider2, slider3]} />
 
+        <TopDeals
+          showEmpty
+          showViewAll
+          onProductIdsChange={handleDealProductIdsChange}
+        />
+
+        <RecommendedProducts
+          limit={12}
+          excludeProductIds={dealProductIds}
+          onProductsChange={handleRecommendedProductIdsChange}
+          showViewAll
+        />
+
         {/* Danh sách sản phẩm */}
-        {initialLoading ? (
+        <section
+          style={{
+            background: '#fff',
+            border: '1px solid #e6e6eb',
+            borderRadius: 12,
+            padding: 20,
+            marginTop: 24,
+            boxShadow: '0 3px 12px rgba(30, 40, 60, 0.05)',
+          }}
+        >
+          <h2
+            style={{
+              margin: 0,
+              color: '#30323b',
+              fontSize: 21,
+              fontWeight: 700,
+            }}
+          >
+            Các sản phẩm khác
+          </h2>
+          {initialLoading ? (
           <div
             style={{
               textAlign: "center",
@@ -147,17 +198,17 @@ const HomePage = () => {
           >
             Đang tải sản phẩm...
           </div>
-        ) : products.length > 0 ? (
-          <WrapperProducts>
-            {products.map((product) => (
+          ) : visibleProducts.length > 0 ? (
+            <WrapperProducts>
+              {visibleProducts.map((product) => (
               <CardComponent
                 key={product._id}
                 product={product}
                 onClick={() => openProduct(product._id)}
               />
-            ))}
-          </WrapperProducts>
-        ) : (
+              ))}
+            </WrapperProducts>
+          ) : (
           <div
             style={{
               textAlign: "center",
@@ -166,7 +217,7 @@ const HomePage = () => {
           >
             Không có sản phẩm để hiển thị.
           </div>
-        )}
+          )}
 
         {/* Nút xem thêm */}
         {hasMore && !initialLoading && products.length > 0 && (
@@ -200,7 +251,7 @@ const HomePage = () => {
         )}
 
         {/* Thông báo khi đã tải hết sản phẩm */}
-        {!hasMore && !initialLoading && products.length > 0 && (
+          {!hasMore && !initialLoading && products.length > 0 && (
           <div
             style={{
               textAlign: "center",
@@ -210,7 +261,8 @@ const HomePage = () => {
           >
             Bạn đã xem hết sản phẩm.
           </div>
-        )}
+          )}
+        </section>
       </div>
     </>
   );

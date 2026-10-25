@@ -53,6 +53,13 @@ const requireCustomer = requireRole(
 );
 
 authMiddleware.verifyToken = authMiddleware;
+authMiddleware.optional = (req, res, next) => {
+    const authHeader = req.headers.authorization || '';
+    if (!authHeader.startsWith('Bearer ')) {
+        return next();
+    }
+    return authMiddleware(req, res, next);
+};
 authMiddleware.requireAdmin = requireAdmin;
 authMiddleware.requireCustomer = requireCustomer;
 

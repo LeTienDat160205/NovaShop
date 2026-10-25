@@ -31,11 +31,17 @@ export const WrapperPriceText = styled.div`
     color: rgb(255, 66, 78);
     font-size: 16px;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
 `
 
 export const WrapperDiscountText = styled.span`
     color: rgb(255, 66, 78);
-    font-size: 12px;
+    background: #fff0f1;
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-size: 11px;
     font-weight: 500;
 `
 export  const WrapperStyleTextSell = styled.span`

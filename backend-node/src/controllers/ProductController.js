@@ -1,4 +1,5 @@
 const Product = require('../models/ProductModel');
+const mongoose = require('mongoose');
 const getProductRatingSummaries = require('../utils/getProductRatingSummaries');
 
 // 1. API Lấy tất cả sản phẩm
@@ -18,9 +19,12 @@ const getAllProduct = async (req, res) => {
                 $project: {
                     name: 1,
                     price: 1,
+                    listPrice: 1,
+                    list_price: 1,
                     rating: 1,
                     images: 1,
-                    brand: 1
+                    brand: 1,
+                    createdAt: 1
                 }
             }
         ]);
@@ -40,6 +44,102 @@ const getAllProduct = async (req, res) => {
         return res.status(500).json({
             status: "ERR",
             message: e.message
+        });
+    }
+};
+
+const getTopDeals = async (req, res) => {
+    try {
+        const limit = Math.min(50, Math.max(1, Math.floor(Number(req.query.limit) || 6)));
+        const page = Math.max(1, Math.floor(Number(req.query.page) || 1));
+        const excludeProductId = req.query.excludeProductId;
+
+        if (excludeProductId && !mongoose.isValidObjectId(excludeProductId)) {
+            return res.status(400).json({
+                status: 'ERR',
+                message: 'ID sản phẩm cần loại trừ không hợp lệ'
+            });
+        }
+
+        const listPriceExpression = {
+            $ifNull: ['$listPrice', { $ifNull: ['$list_price', 0] }]
+        };
+        const priceExpression = { $ifNull: ['$price', 0] };
+        const match = {
+            $expr: {
+                $and: [
+                    { $gt: [priceExpression, 0] },
+                    { $gt: [listPriceExpression, priceExpression] }
+                ]
+            }
+        };
+        if (excludeProductId) {
+            match._id = { $ne: new mongoose.Types.ObjectId(excludeProductId) };
+        }
+
+        const [result] = await Product.aggregate([
+            { $match: match },
+            {
+                $facet: {
+                    products: [
+                        {
+                            $addFields: {
+                                listPrice: listPriceExpression,
+                                discountPercent: {
+                                    $multiply: [
+                                        {
+                                            $divide: [
+                                                { $subtract: [listPriceExpression, priceExpression] },
+                                                listPriceExpression
+                                            ]
+                                        },
+                                        100
+                                    ]
+                                }
+                            }
+                        },
+                        { $sort: { discountPercent: -1, createdAt: -1 } },
+                        { $skip: (page - 1) * limit },
+                        { $limit: limit },
+                        {
+                            $project: {
+                                name: 1,
+                                price: 1,
+                                listPrice: 1,
+                                discountPercent: 1,
+                                rating: 1,
+                                images: 1,
+                                brand: 1,
+                                createdAt: 1
+                            }
+                        }
+                    ],
+                    metadata: [{ $count: 'total' }]
+                }
+            }
+        ]);
+        const products = result?.products || [];
+        const ratingSummaries = await getProductRatingSummaries(products);
+        const productsWithRatings = products.map(product => ({
+            ...product,
+            rating: ratingSummaries.get(String(product._id))?.average || 0,
+            reviewCount: ratingSummaries.get(String(product._id))?.count || 0
+        }));
+
+        return res.status(200).json({
+            status: 'OK',
+            message: 'Lấy sản phẩm Top deal thành công',
+            data: productsWithRatings,
+            total: result?.metadata?.[0]?.total || 0,
+            page,
+            limit,
+            hasMore: page * limit < (result?.metadata?.[0]?.total || 0)
+        });
+    } catch (error) {
+        console.error('Lỗi getTopDeals:', error);
+        return res.status(500).json({
+            status: 'ERR',
+            message: 'Không thể tải sản phẩm Top deal'
         });
     }
 };
@@ -76,6 +176,45 @@ const getDetailsProduct = async (req, res) => {
         });
     }
 };
+
+// Global recommendations ranked with a Bayesian average, without user behavior.
+const proxyRecommendations = async (req, res, userId = null) => {
+    try {
+        const query = new URLSearchParams({
+            limit: String(req.query.limit || 12),
+            page: String(req.query.page || 1)
+        });
+        if (userId) query.set('userId', userId);
+        if (req.query.excludeProductId) {
+            query.set('excludeProductId', String(req.query.excludeProductId));
+        }
+        if (req.query.excludeProductIds) {
+            query.set('excludeProductIds', String(req.query.excludeProductIds));
+        }
+
+        const engineUrl = (process.env.REC_ENGINE_URL || 'http://localhost:8001')
+            .replace(/\/+$/, '');
+        const engineResponse = await fetch(
+            `${engineUrl}/recommendations/default?${query.toString()}`,
+            { signal: AbortSignal.timeout(8000) }
+        );
+        const payload = await engineResponse.json();
+
+        return res.status(engineResponse.status).json(payload);
+    } catch (error) {
+        console.error('Lỗi getRecommendations:', error);
+        return res.status(503).json({
+            status: 'ERR',
+            message: 'Recommendation engine hiện không khả dụng.'
+        });
+    }
+};
+
+const getRecommendations = (req, res) =>
+    proxyRecommendations(req, res, req.user?.id || null);
+
+const getDefaultRecommendations = (req, res) =>
+    proxyRecommendations(req, res);
 
 // 3. API lấy sản phẩm tương tự
 const getSimilarProducts = async (req, res) => {
@@ -351,7 +490,10 @@ const getProductsByCategory = async (req, res) => {
 
 module.exports = {
     getAllProduct,
+    getTopDeals,
     getDetailsProduct,
+    getRecommendations,
+    getDefaultRecommendations,
     getSimilarProducts,
     getProductsByCategory
 };

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const Cart = require('../models/CartModel');
 const Product = require('../models/ProductModel');
 const { refreshCartPrices, formatCart } = require('../utils/cartUtils');
+const recordInteraction = require('../utils/recordInteraction');
 
 // GET /api/cart
 const getCart = async (req, res) => {
@@ -86,6 +87,7 @@ const addToCart = async (req, res) => {
 
         await refreshCartPrices(cart);
         await cart.save();
+        await recordInteraction(req.user.id, productId, 'cart');
 
         return res.status(200).json({
             status: 'OK',
