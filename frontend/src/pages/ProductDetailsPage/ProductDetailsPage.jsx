@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { message } from "antd";
 import * as ProductService from "../../services/ProductService";
 import * as CartService from "../../services/CartService";
 import ProductDetailsComponent from '../../components/ProductDetailsComponent/ProductDetailsComponent';
 import { getMockProductDetail } from '../../data/mockProductDetail';
+import { getAuthSession } from '../../utils/authSession';
 
 const USE_MOCK_FALLBACK = false;
 
@@ -24,7 +25,7 @@ const ProductDetailsPage = () => {
                 } else {
                     setProduct(USE_MOCK_FALLBACK ? getMockProductDetail(id) : null);
                 }
-            } catch (error) {
+            } catch {
                 setProduct(USE_MOCK_FALLBACK ? getMockProductDetail(id) : null);
             } finally {
                 setLoading(false);
@@ -60,23 +61,37 @@ const ProductDetailsPage = () => {
         }
     };
 
-    const handleBuyNow = ({ productId, quantity }) => {
+    const handleBuyNow = async ({ productId, quantity }) => {
         if (!requireLogin()) return;
         if (!product?._id || !productId) {
             message.error('Không tìm thấy sản phẩm hợp lệ trong cơ sở dữ liệu.');
             return;
         }
 
+        const selectedQuantity = Number(quantity) || 1;
+        try {
+            await CartService.addToCart(product._id, selectedQuantity);
+        } catch (error) {
+            if (error.response?.status === 401) {
+                message.warning('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                navigate('/sign-in');
+            } else {
+                message.error(error.response?.data?.message || error.message || 'Không thể chuẩn bị sản phẩm để thanh toán.');
+            }
+            return;
+        }
+
         navigate('/payment', {
             state: {
+                checkoutUserId: getAuthSession().userId,
                 selectedItems: [{
                     productId: product._id,
                     name: product.name,
                     price: Number(product.price),
                     image: product.images?.[0] || '',
-                    quantity: Number(quantity) || 1
+                    quantity: selectedQuantity
                 }],
-                totalPrice: Number(product.price) * (Number(quantity) || 1)
+                totalPrice: Number(product.price) * selectedQuantity
             }
         });
     };

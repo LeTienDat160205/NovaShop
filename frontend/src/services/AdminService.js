@@ -45,6 +45,9 @@ export const removeAdminCartItem = (userId, productId) =>
 export const createOrder = (payload) =>
   request('/orders', jsonOptions('POST', payload));
 export const getMyOrders = () => request('/orders/mine');
+export const getMyOrder = (id) => request(`/orders/${encodeURIComponent(id)}`);
+export const cancelMyOrder = (id) =>
+  request(`/orders/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
 export const getAdminReviews = () => request('/admin/reviews');
 export const deleteAdminReview = (id) =>
   request(`/admin/reviews/${id}`, { method: 'DELETE' });

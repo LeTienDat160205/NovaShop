@@ -136,8 +136,15 @@ const PaymentPage = () => {
                 shippingName: shippingInfo.name,
                 shippingPhone: shippingInfo.phone,
                 shippingAddress: shippingInfo.address,
-                paymentMethod: payment === "cod" ? "COD" : "CARD",
+                paymentMethod: payment === "cod" ? "COD" : "MOMO",
             });
+            if (payment === "momo") {
+                if (!result.data?.payUrl) {
+                    throw new Error("Không nhận được liên kết thanh toán MoMo.");
+                }
+                window.location.assign(result.data.payUrl);
+                return;
+            }
             navigate("/order-success", { state: { orderId: result.data?.id } });
         } catch (error) {
             message.error(error.message || "Không thể tạo đơn hàng.");
@@ -224,7 +231,7 @@ const PaymentPage = () => {
                                         <Radio value="cod">Thanh toán khi nhận hàng (COD)</Radio>
                                     </div>
                                     <div style={{ padding: "16px 0 4px" }}>
-                                        <Radio value="card">Thẻ ngân hàng / ví điện tử</Radio>
+                                        <Radio value="momo">Ví MoMo</Radio>
                                     </div>
                                 </Radio.Group>
                             </section>

@@ -25,11 +25,18 @@ const updateOrderStatus = async (req, res) => {
         if (!statuses.includes(status)) {
             return res.status(400).json({ message: 'Trạng thái đơn hàng không hợp lệ.' });
         }
-        const order = await Order.findByIdAndUpdate(
-            req.params.id,
-            { status },
-            { new: true, runValidators: true }
-        ).populate('userId', 'name email phone');
+        const existingOrder = await Order.findById(req.params.id);
+        if (!existingOrder) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
+        if (
+            ['Processing', 'Delivered'].includes(status)
+            && existingOrder.paymentMethod === 'MOMO'
+            && existingOrder.paymentStatus !== 'Paid'
+        ) {
+            return res.status(409).json({ message: 'Chỉ có thể xử lý đơn MoMo sau khi thanh toán thành công.' });
+        }
+        existingOrder.status = status;
+        const order = await existingOrder.save();
+        await order.populate('userId', 'name email phone');
         if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
         return res.status(200).json({ message: 'Đã cập nhật trạng thái đơn hàng.', data: order });
     } catch (error) {

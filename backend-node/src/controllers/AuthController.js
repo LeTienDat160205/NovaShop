@@ -1,6 +1,8 @@
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/UserModel');
+const { sendPasswordResetEmail } = require('../utils/emailService');
 
 const publicUser = (user) => ({
 	id: user._id,
@@ -85,6 +87,87 @@ const login = async (req, res) => {
 	} catch (error) {
 		console.error('Login error:', error);
 		return res.status(500).json({ message: 'Không thể đăng nhập lúc này.' });
+	}
+};
+
+const requestPasswordReset = async (req, res) => {
+	try {
+		const email = typeof req.body?.email === 'string'
+			? req.body.email.trim().toLowerCase()
+			: '';
+		if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 254) {
+			return res.status(400).json({ message: 'Email không hợp lệ.' });
+		}
+
+		const user = await User.findOne({ email });
+		if (!user) {
+			return res.status(200).json({
+				message: 'Nếu email thuộc một tài khoản, hướng dẫn đặt lại mật khẩu sẽ được gửi.'
+			});
+		}
+
+		const token = crypto.randomBytes(32).toString('hex');
+		const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+		user.resetPasswordTokenHash = tokenHash;
+		user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+		await user.save();
+
+		const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+		const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
+		try {
+			await sendPasswordResetEmail(email, resetUrl);
+		} catch (error) {
+			await User.updateOne(
+				{ _id: user._id, resetPasswordTokenHash: tokenHash },
+				{ $unset: { resetPasswordTokenHash: 1, resetPasswordExpires: 1 } }
+			);
+			console.error('Password reset email error:', error);
+			return res.status(503).json({ message: 'Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại sau.' });
+		}
+
+		return res.status(200).json({
+			message: 'Nếu email thuộc một tài khoản, hướng dẫn đặt lại mật khẩu sẽ được gửi.'
+		});
+	} catch (error) {
+		console.error('Request password reset error:', error);
+		return res.status(500).json({ message: 'Không thể xử lý yêu cầu lúc này.' });
+	}
+};
+
+const resetPassword = async (req, res) => {
+	try {
+		const { token, password } = req.body || {};
+		if (
+			typeof token !== 'string'
+			|| !/^[a-f\d]{64}$/i.test(token)
+			|| typeof password !== 'string'
+			|| password.length < 8
+			|| password.length > 128
+		) {
+			return res.status(400).json({ message: 'Liên kết hoặc mật khẩu không hợp lệ.' });
+		}
+
+		const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+		const hashedPassword = await bcrypt.hash(password, 12);
+		const user = await User.findOneAndUpdate(
+			{
+				resetPasswordTokenHash: tokenHash,
+				resetPasswordExpires: { $gt: new Date() }
+			},
+			{
+				$set: { password: hashedPassword },
+				$unset: { resetPasswordTokenHash: 1, resetPasswordExpires: 1 }
+			},
+			{ new: true }
+		);
+
+		if (!user) {
+			return res.status(400).json({ message: 'Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.' });
+		}
+		return res.status(200).json({ message: 'Đặt lại mật khẩu thành công. Bạn có thể đăng nhập.' });
+	} catch (error) {
+		console.error('Reset password error:', error);
+		return res.status(500).json({ message: 'Không thể đặt lại mật khẩu lúc này.' });
 	}
 };
 
@@ -178,4 +261,4 @@ const updateProfile = async (req, res) => {
 	}
 };
 
-module.exports = { register, login, updateProfile };
+module.exports = { register, login, requestPasswordReset, resetPassword, updateProfile };

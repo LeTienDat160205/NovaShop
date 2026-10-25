@@ -2,13 +2,17 @@ const mongoose = require('mongoose');
 const Cart = require('../models/CartModel');
 const Order = require('../models/OrderModel');
 const { refreshCartPrices } = require('../utils/cartUtils');
+const { createMomoPayment, verifyMomoIpn, getMomoConfig } = require('../utils/momoPayment');
 
 const formatOrder = (order) => ({
-    id: order._id,
+    id: order._id.toString(),
     status: order.status,
     totalPrice: order.totalPrice,
     createdAt: order.createdAt,
-    payment: order.paymentMethod === 'COD' ? 'cod' : 'card',
+    payment: order.paymentMethod === 'COD' ? 'cod' : 'momo',
+    paymentMethod: order.paymentMethod,
+    paymentStatus: order.paymentStatus,
+    paymentTransactionId: order.paymentTransactionId,
     shippingInfo: {
         name: order.shippingName,
         phone: order.shippingPhone,
@@ -22,6 +26,25 @@ const formatOrder = (order) => ({
         quantity: item.quantity
     }))
 });
+
+const removeOrderedItemsFromCart = async (userId, items) => {
+    const cart = await Cart.findOne({ userId });
+    if (!cart) return;
+
+    const quantities = new Map(
+        items.map(item => [item.productId.toString(), Number(item.quantity)])
+    );
+    cart.items = cart.items.flatMap(item => {
+        const productId = item.productId.toString();
+        const orderedQuantity = quantities.get(productId) || 0;
+        const remainingQuantity = Number(item.quantity) - orderedQuantity;
+        return remainingQuantity > 0
+            ? [{ ...item.toObject(), quantity: remainingQuantity }]
+            : [];
+    });
+    await refreshCartPrices(cart);
+    await cart.save();
+};
 
 const createOrder = async (req, res) => {
     try {
@@ -53,8 +76,16 @@ const createOrder = async (req, res) => {
         if (!/^(0\d{9}|\+84\d{9})$/.test(shippingPhone.trim())) {
             return res.status(400).json({ message: 'Số điện thoại giao hàng không hợp lệ.' });
         }
-        if (!['COD', 'CARD'].includes(paymentMethod)) {
+        if (!['COD', 'MOMO'].includes(paymentMethod)) {
             return res.status(400).json({ message: 'Phương thức thanh toán không hợp lệ.' });
+        }
+        if (paymentMethod === 'MOMO') {
+            try {
+                getMomoConfig();
+            } catch (error) {
+                console.error('MoMo configuration error:', error);
+                return res.status(503).json({ message: 'Thanh toán MoMo chưa được cấu hình.' });
+            }
         }
 
         const requested = new Map();
@@ -101,15 +132,29 @@ const createOrder = async (req, res) => {
             shippingPhone: shippingPhone.trim(),
             shippingAddress: shippingAddress.trim(),
             paymentMethod,
+            paymentStatus: paymentMethod === 'MOMO' ? 'Pending' : 'NotRequired',
             status: 'Pending'
         });
 
-        const purchasedIds = new Set(requested.keys());
-        cart.items = cart.items.filter(item => !purchasedIds.has(item.productId.toString()));
-        await refreshCartPrices(cart);
-        await cart.save();
+        if (paymentMethod === 'MOMO') {
+            try {
+                const payUrl = await createMomoPayment(order);
+                return res.status(201).json({
+                    message: 'Đã tạo yêu cầu thanh toán MoMo.',
+                    data: { id: order._id, payUrl, paymentStatus: order.paymentStatus }
+                });
+            } catch (error) {
+                await Order.findByIdAndUpdate(order._id, { paymentStatus: 'Failed' });
+                console.error('Create MoMo payment error:', error);
+                return res.status(502).json({ message: 'Không thể khởi tạo thanh toán MoMo. Vui lòng thử lại.' });
+            }
+        }
 
-        return res.status(201).json({ message: 'Đặt hàng thành công.', data: { id: order._id } });
+        await removeOrderedItemsFromCart(req.user.id, order.items);
+        return res.status(201).json({
+            message: 'Đặt hàng thành công.',
+            data: { id: order._id, paymentStatus: order.paymentStatus }
+        });
     } catch (error) {
         console.error('Create order error:', error);
         return res.status(500).json({ message: 'Không thể tạo đơn hàng.' });
@@ -129,4 +174,112 @@ const getMyOrders = async (req, res) => {
     }
 };
 
-module.exports = { createOrder, getMyOrders };
+const getMyOrder = async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).json({ message: 'ID đơn hàng không hợp lệ.' });
+        }
+        const order = await Order.findOne({ _id: req.params.id, userId: req.user.id })
+            .populate('items.productId', 'name images')
+            .lean();
+        if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
+        return res.status(200).json({ data: formatOrder(order) });
+    } catch (error) {
+        console.error('Get customer order error:', error);
+        return res.status(500).json({ message: 'Không thể tải chi tiết đơn hàng.' });
+    }
+};
+
+const cancelMyOrder = async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).json({ message: 'ID đơn hàng không hợp lệ.' });
+        }
+        const order = await Order.findOne({ _id: req.params.id, userId: req.user.id });
+        if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
+        if (order.status !== 'Pending') {
+            return res.status(409).json({ message: 'Chỉ có thể hủy đơn hàng đang chờ xác nhận.' });
+        }
+        if (order.paymentStatus === 'Paid') {
+            return res.status(409).json({ message: 'Đơn hàng đã thanh toán; vui lòng liên hệ hỗ trợ để được xử lý.' });
+        }
+        if (order.paymentMethod === 'MOMO' && order.paymentStatus === 'Pending') {
+            return res.status(409).json({ message: 'Thanh toán MoMo đang chờ xác nhận; chưa thể hủy đơn này.' });
+        }
+
+        const cancelledOrder = await Order.findOneAndUpdate(
+            {
+                _id: order._id,
+                userId: req.user.id,
+                status: 'Pending',
+                paymentStatus: order.paymentStatus
+            },
+            { $set: { status: 'Cancelled' } },
+            { new: true }
+        ).populate('items.productId', 'name images');
+        if (!cancelledOrder) {
+            return res.status(409).json({ message: 'Trạng thái đơn hàng vừa thay đổi. Vui lòng tải lại.' });
+        }
+        return res.status(200).json({ message: 'Đã hủy đơn hàng.', data: formatOrder(cancelledOrder) });
+    } catch (error) {
+        console.error('Cancel customer order error:', error);
+        return res.status(500).json({ message: 'Không thể hủy đơn hàng lúc này.' });
+    }
+};
+
+const handleMomoIpn = async (req, res) => {
+    try {
+        const payload = req.body || {};
+        if (!verifyMomoIpn(payload)) {
+            return res.status(400).json({ resultCode: 1, message: 'Chữ ký MoMo không hợp lệ.' });
+        }
+        if (payload.partnerCode !== process.env.MOMO_PARTNER_CODE
+            || payload.accessKey !== process.env.MOMO_ACCESS_KEY
+            || !mongoose.isValidObjectId(payload.orderId)) {
+            return res.status(400).json({ resultCode: 1, message: 'Thông tin giao dịch không hợp lệ.' });
+        }
+
+        const order = await Order.findOne({
+            _id: payload.orderId,
+            paymentMethod: 'MOMO'
+        });
+        if (!order || Number(payload.amount) !== Math.round(order.totalPrice)) {
+            return res.status(400).json({ resultCode: 1, message: 'Không tìm thấy đơn hàng hoặc số tiền không khớp.' });
+        }
+
+        if (order.paymentStatus === 'Paid') {
+            return res.status(200).json({ resultCode: 0, message: 'Giao dịch đã được xác nhận.' });
+        }
+        if (order.status === 'Cancelled') {
+            return res.status(409).json({ resultCode: 1, message: 'Đơn hàng đã bị hủy.' });
+        }
+
+        if (Number(payload.resultCode) === 0) {
+            const updatedOrder = await Order.findOneAndUpdate(
+                { _id: order._id, paymentStatus: 'Pending', status: 'Pending' },
+                {
+                    $set: {
+                        paymentStatus: 'Paid',
+                        paymentTransactionId: String(payload.transId || '')
+                    }
+                },
+                { new: true }
+            );
+            if (!updatedOrder) {
+                return res.status(409).json({ resultCode: 1, message: 'Trạng thái đơn hàng đã thay đổi.' });
+            }
+            await removeOrderedItemsFromCart(updatedOrder.userId, updatedOrder.items);
+        } else if (order.paymentStatus === 'Pending') {
+            order.paymentStatus = 'Failed';
+            order.paymentTransactionId = String(payload.transId || '');
+            await order.save();
+        }
+
+        return res.status(200).json({ resultCode: 0, message: 'Đã nhận kết quả thanh toán.' });
+    } catch (error) {
+        console.error('MoMo IPN error:', error);
+        return res.status(500).json({ resultCode: 1, message: 'Không thể xử lý kết quả thanh toán.' });
+    }
+};
+
+module.exports = { createOrder, getMyOrders, getMyOrder, cancelMyOrder, handleMomoIpn };

@@ -13,6 +13,8 @@ import DetailsOrderPage from "../pages/DetailsOrderPage/DetailsOrderPage";
 import ProfilePage from "../pages/ProfilePage/ProfilePage";
 import AdminPage from "../pages/AdminPage/AdminPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage/ForgorPasswordpage";
+import ResetPasswordPage from "../pages/ForgotPasswordPage/ResetPasswordPage";
+import FavoritesPage from "../pages/FavoritesPage/FavoritesPage";
 
 
 export const routes = [
@@ -52,6 +54,11 @@ export const routes = [
         isShowHeader: true,
     },
     {
+        path: '/favorites',
+        page: FavoritesPage,
+        isShowHeader: true,
+    },
+    {
         path: '/details-order/:id',
         page: DetailsOrderPage,
         isShowHeader: true,
@@ -82,6 +89,11 @@ export const routes = [
         page: ForgotPasswordPage,
         isShowHeader: false,
     },
+     {
+         path: '/reset-password',
+         page: ResetPasswordPage,
+         isShowHeader: false,
+     },
     {
         path: '/product-details/:id',
         page: ProductDetailsPage,

@@ -12,6 +12,7 @@ const adminDashboardRoutes = require('./routes/AdminDashboardRouter');
 const adminCartRoutes = require('./routes/AdminCartRouter');
 const adminOrderRoutes = require('./routes/AdminOrderRouter');
 const adminReviewRoutes = require('./routes/AdminReviewRouter');
+const favoriteRoutes = require('./routes/FavoriteRouter');
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
@@ -38,6 +39,7 @@ app.use('/api/product', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/favorites', favoriteRoutes);
 app.use('/api/admin/products', adminProductRoutes);
 app.use('/api/admin/dashboard', adminDashboardRoutes);
 app.use('/api/admin/carts', adminCartRoutes);

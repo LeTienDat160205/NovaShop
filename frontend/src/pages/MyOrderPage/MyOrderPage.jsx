@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Button, Card, Tag, Empty, Image, Modal, Spin, message, Space } from "antd";
+import { Button, Card, Tag, Empty, Image, Popconfirm, Spin, message, Space } from "antd";
 import { ReloadOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { getMyOrders } from "../../services/AdminService";
+import { cancelMyOrder, getMyOrders } from "../../services/AdminService";
 import { clearAuthSession, getAuthSession } from "../../utils/authSession";
 
 const formatPrice = (price) =>
@@ -13,7 +13,20 @@ const MyOrderPage = () => {
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [cancellingId, setCancellingId] = useState("");
+
+  const handleCancelOrder = async (orderId) => {
+    setCancellingId(orderId);
+    try {
+      const result = await cancelMyOrder(orderId);
+      setOrders(current => current.map(order => order.id === orderId ? result.data : order));
+      message.success(result.message || "Đã hủy đơn hàng.");
+    } catch (error) {
+      message.error(error.message || "Không thể hủy đơn hàng.");
+    } finally {
+      setCancellingId("");
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -204,75 +217,28 @@ const MyOrderPage = () => {
 
             {/* Nút xem chi tiết */}
             <div style={{ marginTop: 16 }}>
-              <Button onClick={() => setSelectedOrder(order)}>
-                Xem chi tiết
-              </Button>
+              <Space wrap>
+                <Button onClick={() => navigate(`/details-order/${order.id}`)}>
+                  Xem chi tiết
+                </Button>
+                {order.status === "Pending"
+                  && order.paymentStatus !== "Pending"
+                  && order.paymentStatus !== "Paid" && (
+                  <Popconfirm
+                    title="Hủy đơn hàng này?"
+                    description="Thao tác này không thể hoàn tác."
+                    onConfirm={() => handleCancelOrder(order.id)}
+                    okText="Hủy đơn"
+                    cancelText="Quay lại"
+                  >
+                    <Button danger loading={cancellingId === order.id}>Hủy đơn hàng</Button>
+                  </Popconfirm>
+                )}
+              </Space>
             </div>
           </Card>
         ))
       )}
-
-      {/* Modal chi tiết đơn hàng */}
-      <Modal
-        title={
-          selectedOrder
-            ? `Chi tiết đơn hàng #${String(selectedOrder.id).slice(-8).toUpperCase()}`
-            : "Chi tiết đơn hàng"
-        }
-        open={!!selectedOrder}
-        onCancel={() => setSelectedOrder(null)}
-        footer={
-          <Button onClick={() => setSelectedOrder(null)}>
-            Đóng
-          </Button>
-        }
-      >
-        {selectedOrder && (
-          <>
-            <p>
-              <strong>Mã đơn hàng:</strong> {selectedOrder.id}
-            </p>
-
-            <p>
-              <strong>Ngày đặt:</strong>{" "}
-              {new Date(selectedOrder.createdAt).toLocaleString("vi-VN")}
-            </p>
-
-            <p>
-              <strong>Trạng thái:</strong> {statusLabel[selectedOrder.status] || selectedOrder.status}
-            </p>
-
-            <p>
-              <strong>Người nhận:</strong>{" "}
-              {selectedOrder.shippingInfo?.name || "Chưa cập nhật"}
-            </p>
-
-            <p>
-              <strong>Số điện thoại:</strong>{" "}
-              {selectedOrder.shippingInfo?.phone || "Chưa cập nhật"}
-            </p>
-
-            <p>
-              <strong>Địa chỉ:</strong>{" "}
-              {selectedOrder.shippingInfo?.address || "Chưa cập nhật"}
-            </p>
-
-            <p>
-              <strong>Phương thức thanh toán:</strong>{" "}
-              {selectedOrder.payment === "cod"
-                ? "Thanh toán khi nhận hàng"
-                : "Thẻ ngân hàng / ví điện tử"}
-            </p>
-
-            <p>
-              <strong>Tổng tiền:</strong>{" "}
-              <strong style={{ color: "#ff424e" }}>
-                {formatPrice(selectedOrder.totalPrice)}
-              </strong>
-            </p>
-          </>
-        )}
-      </Modal>
     </main>
   );
 };

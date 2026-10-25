@@ -73,11 +73,18 @@ const HeaderComponent = () => {
   const userMenu = {
     items: [
       ...(user?.role === "Customer"
-        ? [{
-            key: "orders",
-            label: "Đơn hàng của tôi",
-            onClick: () => navigate("/my-order"),
-          }]
+        ? [
+            {
+              key: "orders",
+              label: "Đơn hàng của tôi",
+              onClick: () => navigate("/my-order"),
+            },
+            {
+              key: "favorites",
+              label: "Sản phẩm yêu thích",
+              onClick: () => navigate("/favorites"),
+            },
+          ]
         : []),
       {
         key: "profile",

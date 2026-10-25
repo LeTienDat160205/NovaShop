@@ -1,6 +1,6 @@
 # NovaShop
 
-NovaShop là giao diện website thương mại điện tử được xây dựng bằng React, hỗ trợ duyệt sản phẩm, tìm kiếm, xem chi tiết sản phẩm, quản lý giỏ hàng, thanh toán mô phỏng, theo dõi đơn hàng và khu vực quản trị cửa hàng.
+NovaShop là website thương mại điện tử được xây dựng bằng React và Node.js, hỗ trợ duyệt sản phẩm, tìm kiếm, quản lý giỏ hàng, đặt hàng COD hoặc thanh toán MoMo, khôi phục mật khẩu qua email, theo dõi đơn hàng và khu vực quản trị cửa hàng.
 
 ## Công nghệ sử dụng
 
@@ -13,6 +13,9 @@ NovaShop là giao diện website thương mại điện tử được xây dựn
 - Styled Components
 - React Slick và Slick Carousel
 - JavaScript ES Modules
+- Node.js và Express
+- MongoDB và Mongoose
+- Nodemailer cho email SMTP
 
 ## Chạy dự án
 
@@ -46,6 +49,22 @@ npm run lint
 ```bash
 npm run preview
 ```
+
+## Cấu hình backend
+
+Tạo file `backend-node/.env` dựa trên [`backend-node/.env.example`](./backend-node/.env.example), sau đó chạy backend:
+
+```bash
+cd backend-node
+npm install
+npm start
+```
+
+- SMTP cần được cấu hình để gửi email đặt lại mật khẩu. Liên kết đặt lại hết hạn sau 15 phút.
+- MoMo cần `MOMO_PARTNER_CODE`, `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY`, `MOMO_REDIRECT_URL` và `MOMO_IPN_URL`. Mặc định endpoint dùng môi trường thử nghiệm; IPN phải là URL HTTPS công khai mà MoMo có thể gọi.
+- Chỉ xác nhận thanh toán từ IPN đã kiểm tra chữ ký. Đơn MoMo chưa thanh toán không được chuyển sang xử lý/giao hàng.
+- COD không cần cấu hình cổng thanh toán. Khách hàng có thể hủy đơn đang chờ xác nhận; đơn MoMo đang chờ xử lý thanh toán không thể hủy.
+- Tài khoản khách hàng có thể lưu và quản lý danh sách sản phẩm yêu thích từ trang chi tiết sản phẩm hoặc menu tài khoản.
 
 ## Các chức năng chính
 
@@ -149,7 +168,7 @@ Trang thanh toán hỗ trợ:
 - Hiển thị phương thức giao hàng tiêu chuẩn.
 - Hiển thị thời gian giao hàng dự kiến từ 2 đến 4 ngày.
 - Thanh toán khi nhận hàng.
-- Thanh toán bằng thẻ ngân hàng hoặc ví điện tử.
+- Thanh toán qua ví MoMo.
 - Hiển thị thông tin đơn hàng.
 - Hiển thị tạm tính, phí vận chuyển và tổng tiền.
 - Thay đổi thông tin giao hàng:
@@ -176,6 +195,7 @@ Trang “Đơn hàng của tôi” hỗ trợ:
 - Hiển thị tổng tiền.
 - Hiển thị trạng thái đơn hàng.
 - Mở trang chi tiết đơn hàng.
+- Hủy đơn đang chờ xác nhận nếu chưa thanh toán.
 
 ### Chi tiết đơn hàng
 
@@ -184,14 +204,26 @@ Trang chi tiết đơn hàng hiển thị:
 - Mã đơn hàng.
 - Tiến trình xử lý đơn hàng:
   - Đặt hàng
-  - Xác nhận
-  - Đang giao
+  - Đang xử lý
   - Hoàn tất
 - Trạng thái đơn hàng.
 - Người nhận.
 - Địa chỉ giao hàng.
 - Phương thức thanh toán.
+- Trạng thái thanh toán.
+- Danh sách sản phẩm và số lượng.
 - Tổng tiền đơn hàng.
+
+### Khôi phục mật khẩu
+
+- Yêu cầu liên kết khôi phục qua email đã đăng ký.
+- Đặt mật khẩu mới từ liên kết dùng một lần, hết hạn sau 15 phút.
+- Yêu cầu SMTP cấu hình ở backend.
+
+### Sản phẩm yêu thích
+
+- Lưu/xóa sản phẩm yêu thích trên trang chi tiết.
+- Xem và quản lý danh sách yêu thích từ menu tài khoản.
 
 ### Tài khoản người dùng
 
@@ -317,17 +349,20 @@ Khi truy cập đường dẫn không tồn tại, hệ thống hiển thị:
 | Route | Chức năng |
 |---|---|
 | `/` | Trang chủ |
-| `/products` | Danh sách sản phẩm |
-| `/product/:type` | Danh sách sản phẩm theo loại |
-| `/product-details/:id` | Chi tiết sản phẩm |
 | `/order` | Giỏ hàng |
+| `/products` | Danh sách sản phẩm |
+| `/products/:type` | Danh sách sản phẩm theo loại |
+| `/product-details/:id` | Chi tiết sản phẩm |
 | `/payment` | Thanh toán |
 | `/order-success` | Đặt hàng thành công |
 | `/my-order` | Đơn hàng của tôi |
+| `/favorites` | Sản phẩm yêu thích |
 | `/details-order/:id` | Chi tiết đơn hàng |
 | `/profile-user` | Thông tin tài khoản |
 | `/sign-in` | Đăng nhập |
 | `/sign-up` | Đăng ký |
+| `/forgot-password` | Yêu cầu đặt lại mật khẩu |
+| `/reset-password` | Đặt lại mật khẩu bằng liên kết email |
 | `/system/admin` | Khu vực quản trị |
 | `*` | Trang 404 |
 

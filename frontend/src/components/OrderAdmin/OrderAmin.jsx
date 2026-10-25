@@ -80,7 +80,16 @@ const OrderAdmin = () => {
     {
       title: 'Thanh toán',
       dataIndex: 'paymentMethod',
-      render: value => value === 'COD' ? 'Thanh toán khi nhận hàng' : value === 'CARD' ? 'Thẻ / ví điện tử' : value || '—',
+      render: (value, order) => (
+        <Space direction="vertical" size={2}>
+          <span>{value === 'COD' ? 'Thanh toán khi nhận hàng' : value === 'MOMO' ? 'Ví MoMo' : value || '—'}</span>
+          {value === 'MOMO' && (
+            <Tag color={order.paymentStatus === 'Paid' ? 'green' : order.paymentStatus === 'Failed' ? 'red' : 'orange'}>
+              {order.paymentStatus === 'Paid' ? 'Đã thanh toán' : order.paymentStatus === 'Failed' ? 'Thất bại' : 'Đang chờ'}
+            </Tag>
+          )}
+        </Space>
+      ),
     },
     { title: 'Tổng tiền', dataIndex: 'totalPrice', render: formatPrice },
     {

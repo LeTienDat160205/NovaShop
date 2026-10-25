@@ -27,6 +27,7 @@ import TopDeals from './sub-components/TopDeals';
 import RecentlyViewed from './sub-components/RecentlyViewed';
 import ExploreMore from './sub-components/ExploreMore';
 import ButtonComponent from '../ButtonComponent/ButtonComponent';
+import FavoriteButton from '../FavoriteButton/FavoriteButton';
 
 // ─── Trạng thái loading (Skeleton) ───────────────────────────────────────────
 const SkeletonLayout = () => (
@@ -136,6 +137,10 @@ const ProductDetailsComponent = ({
           {/* Cột giữa: Thông tin sản phẩm */}
           <div>
             <ProductInfo product={product} />
+
+            <div style={{ marginTop: 12 }}>
+              <FavoriteButton key={product._id} productId={product._id} />
+            </div>
 
             <div style={{ height: 12 }} />
 
