@@ -3,13 +3,13 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { Result, Button } from 'antd';
 import { getAuthSession } from '../../utils/authSession';
 
-/**
- * Guard kiểm tra quyền Admin trên giao diện frontend.
- * GHI CHÚ QUAN TRỌNG:
- * Đây chỉ là lớp chặn giao diện (UI) để cải thiện trải nghiệm người dùng.
- * Cơ chế bảo vệ và phân quyền thực sự tuyệt đối nằm ở server backend
- * thông qua authMiddleware.requireAdmin.
- */
+
+
+
+
+
+
+
 const readSessionUser = () => {
     const session = getAuthSession();
     return session.token && session.userId && session.role ? session.user : null;
@@ -29,12 +29,12 @@ const AdminRoute = ({ children }) => {
         };
     }, []);
 
-    // Chưa đăng nhập -> chuyển hướng về trang đăng nhập
+
     if (!user) {
         return <Navigate to="/sign-in" state={{ from: location.pathname }} replace />;
     }
 
-    // Đã đăng nhập nhưng không phải Admin -> hiện trang thông báo 403
+
     if (user.role !== 'Admin') {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
@@ -52,7 +52,7 @@ const AdminRoute = ({ children }) => {
         );
     }
 
-    // Role hợp lệ (Admin) -> hiển thị nội dung bên trong
+
     return children;
 };
 

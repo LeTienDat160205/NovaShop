@@ -51,7 +51,7 @@ const cartSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Tính lại giá từng món và tổng giá giỏ hàng trước khi lưu.
+
 cartSchema.pre('save', function () {
     this.items.forEach(item => {
         item.totalPrice = Number(item.unitPrice || 0) * Number(item.quantity || 0);

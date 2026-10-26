@@ -30,13 +30,13 @@ export const WrapperButtonMore = styled(ButtonComponent)`
     text-align: center;
 `
 
-// export const WrapperProducts = styled.div`
-//     display: flex;
-//     justify-content: flex-start;
-//     gap: 30px;
-//     margin-top: 20px;
-//     flex-wrap: wrap;
-// `
+
+
+
+
+
+
+
 export const WrapperProducts = styled.div`
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));

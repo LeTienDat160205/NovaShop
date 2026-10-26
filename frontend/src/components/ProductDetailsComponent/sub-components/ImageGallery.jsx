@@ -32,12 +32,12 @@ const ImageGallery = ({ images = [] }) => {
   return (
     <StickyBox>
       <GalleryContainer>
-        {/* Ảnh lớn */}
+
         <GalleryMainImage>
           <img src={mainSrc} alt="Ảnh sản phẩm" draggable={false} />
         </GalleryMainImage>
 
-        {/* Dãy thumbnail */}
+
         {safeImages.length > 1 && (
           <ThumbnailRow>
             <ArrowBtn onClick={handlePrev} disabled={!canPrev} aria-label="Thumbnail trước">
@@ -65,7 +65,7 @@ const ImageGallery = ({ images = [] }) => {
           </ThumbnailRow>
         )}
 
-        {/* Gợi ý xem ưu điểm */}
+
         <GalleryHintRow>
           <div className="hint-left">
             <InfoCircleOutlined style={{ color: '#0B74E5', fontSize: 14 }} />

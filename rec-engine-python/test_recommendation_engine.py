@@ -4,6 +4,7 @@ from recommendation_engine import (
     rank_content_profile_products,
     rank_personalized_products,
     rank_products,
+    rank_similar_products,
 )
 
 
@@ -159,6 +160,36 @@ class RankProductsTests(unittest.TestCase):
         )
 
         self.assertEqual([product["_id"] for product in ranked], ["related-audio"])
+
+    def test_similar_products_use_tfidf_cosine_and_exclude_source(self):
+        products = [
+            {
+                "_id": "source",
+                "name": "Tai nghe Bluetooth Nova Pro",
+                "brand": "Nova",
+                "categoryPath": ["Điện tử", "Tai nghe"],
+                "specifications": {"Kết nối": "Bluetooth"},
+            },
+            {
+                "_id": "similar",
+                "name": "Tai nghe Bluetooth Nova Lite",
+                "brand": "Nova",
+                "categoryPath": ["Điện tử", "Tai nghe"],
+                "specifications": {"Kết nối": "Bluetooth"},
+            },
+            {
+                "_id": "unrelated",
+                "name": "Áo sơ mi cotton",
+                "brand": "Other",
+                "categoryPath": ["Thời trang", "Áo sơ mi"],
+                "specifications": {"Chất liệu": "Cotton"},
+            },
+        ]
+
+        ranked = rank_similar_products(products, "source")
+
+        self.assertEqual([product["_id"] for product in ranked], ["similar"])
+        self.assertGreater(ranked[0]["similarityScore"], 0)
 
 
 if __name__ == "__main__":

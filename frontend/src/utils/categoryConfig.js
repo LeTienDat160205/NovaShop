@@ -1,26 +1,26 @@
-// src/utils/categoryConfig.js
+
 import productsData from "../data/products.json";
 
 export const CATEGORY_LIST = [
   {
     name: "Tai nghe",
     slug: "earphone",
-    dbKeyword: "Tai Nghe", // Khớp với "Tai Nghe Bluetooth", "Tai Nghe Có Dây"
+    dbKeyword: "Tai Nghe",
   },
   {
     name: "Chuột & Bàn phím",
     slug: "mouse-keyboard",
-    dbKeyword: "Chuột|Bàn Phím|Phím Chuột", // Khớp cả chuột và bàn phím
+    dbKeyword: "Chuột|Bàn Phím|Phím Chuột",
   },
   {
     name: "Pin sạc & Cáp",
     slug: "accessories",
-    dbKeyword: "Pin Sạc|Dây Cáp|Adapter|Củ Sạc|Dây Sạc", // Khớp cả sạc dự phòng, củ sạc, dây cáp
+    dbKeyword: "Pin Sạc|Dây Cáp|Adapter|Củ Sạc|Dây Sạc",
   },
   {
     name: "Đồng hồ thông minh",
     slug: "smartwatch",
-    dbKeyword: "Đồng Hồ|Vòng Đeo|Vòng Tay", // Khớp cả Smart watch lẫn Vòng đeo tay
+    dbKeyword: "Đồng Hồ|Vòng Đeo|Vòng Tay",
   },
   {
     name: "Loa",

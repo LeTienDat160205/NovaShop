@@ -29,7 +29,7 @@ import RecommendedProducts from '../RecommendedProducts/RecommendedProducts';
 import ButtonComponent from '../ButtonComponent/ButtonComponent';
 import FavoriteButton from '../FavoriteButton/FavoriteButton';
 
-// ─── Trạng thái loading (Skeleton) ───────────────────────────────────────────
+
 const SkeletonLayout = () => (
   <PageWrapper>
     <ContentWrapper>
@@ -45,7 +45,7 @@ const SkeletonLayout = () => (
   </PageWrapper>
 );
 
-// ─── Trạng thái không tìm thấy ───────────────────────────────────────────────
+
 const NotFoundLayout = () => (
   <PageWrapper>
     <ContentWrapper>
@@ -74,14 +74,14 @@ const NotFoundLayout = () => (
 const VIEWED_PRODUCTS_KEY = 'novashop_viewed_products';
 const MAX_VIEWED_PRODUCTS = 12;
 
-// ─── Component chính ──────────────────────────────────────────────────────────
+
 const ProductDetailsComponent = ({
   product,
   isLoading = false,
   onAddToCart = () => {},
   onBuyNow = () => {},
 }) => {
-    // Lưu sản phẩm hiện tại vào lịch sử đã xem
+
     useEffect(() => {
     if (!product?._id) return;
 
@@ -109,10 +109,10 @@ const ProductDetailsComponent = ({
     }
   }, [product?._id]);
 
-  // Loading
+
   if (isLoading) return <SkeletonLayout />;
 
-  // Không tìm thấy
+
   if (!product) return <NotFoundLayout />;
 
   const formatVND = (amount) =>
@@ -121,20 +121,20 @@ const ProductDetailsComponent = ({
   return (
     <PageWrapper>
       <ContentWrapper>
-        {/* A. Breadcrumb */}
+
         <Breadcrumb
           categoryPath={product.categoryPath || []}
           productName={product.name || ''}
         />
 
-        {/* B. Vùng 3 cột */}
+
         <ThreeColumnGrid>
-          {/* Cột trái: Gallery */}
+
           <div>
             <ImageGallery images={product.images || []} />
           </div>
 
-          {/* Cột giữa: Thông tin sản phẩm */}
+
           <div>
             <ProductInfo product={product} />
 
@@ -155,7 +155,7 @@ const ProductDetailsComponent = ({
             <DescriptionSection description={product.description} />
           </div>
 
-          {/* Cột phải: Khung mua hàng (ở tablet span 2 cột dưới, ở mobile ẩn) */}
+
           <PurchaseBoxGridItem>
             <PurchaseBox
               productId={product?._id}
@@ -166,7 +166,7 @@ const ProductDetailsComponent = ({
           </PurchaseBoxGridItem>
         </ThreeColumnGrid>
 
-        {/* C. Đánh giá — full width */}
+
         <div style={{ marginTop: 12 }}>
           <ReviewSection
             productId={product._id}
@@ -175,13 +175,13 @@ const ProductDetailsComponent = ({
           />
         </div>
 
-        {/* D. Các khối full-width */}
+
         <TopDeals currentProductId={product?._id} />
         <RecentlyViewed currentProductId={product?._id}/>
         <RecommendedProducts limit={8} excludeProductId={product?._id} />
       </ContentWrapper>
 
-      {/* Mobile: Thanh mua hàng sticky ở đáy */}
+
       <MobileBuyBar>
         <MobilePriceText>{formatVND(product.price)}</MobilePriceText>
         <ButtonComponent

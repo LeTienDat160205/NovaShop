@@ -9,10 +9,13 @@ detail pages:
 - Signed-in customers with interaction history receive user-neighborhood
   collaborative filtering over implicit feedback. Views, favorites, cart
   additions, and completed purchases have increasing weights; older events
-  decay over time. If there are not yet enough similar users, a content profile
-  built from the customer's interacted product categories and brands is used.
+  decay over time. If there are not yet enough similar users, a TF-IDF content
+  profile built from product names, categories, brands, groups, specifications,
+  and descriptions is compared with cosine similarity.
   Products already interacted with are excluded, and personalized scores are
   blended with the rating-based score.
+- Product detail pages use the same TF-IDF and cosine similarity approach to
+  find similar catalog products.
 
 The Node.js API verifies an optional login token before passing the customer ID
 to this service. It records signed-in product views, favorites, cart additions,
@@ -65,6 +68,7 @@ minimum-review prior (currently 5).
 The service listens on `http://127.0.0.1:8001` by default. Set
 `REC_ENGINE_HOST` or `REC_ENGINE_PORT` to override the binding.
 
-The Node.js API proxies `GET /api/product/recommendations` to this service.
+The Node.js API proxies `GET /api/product/recommendations` and
+`GET /api/product/get-similar/:id` to this service.
 Configure `REC_ENGINE_URL` in the backend environment when the recommendation
 service runs at a different address.

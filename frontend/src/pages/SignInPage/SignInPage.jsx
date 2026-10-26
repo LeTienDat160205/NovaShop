@@ -31,7 +31,7 @@ const SignInPage = () => {
       localStorage.setItem('novashop_token', result.token)
       localStorage.setItem('novashop_user', JSON.stringify(result.user))
       window.dispatchEvent(new Event('novashop-auth-changed'))
-      //navigate(location.state?.from || '/', { replace: true });
+
       if (result.user.role === "Admin") {
         navigate("/system/admin", { replace: true });
     } else {
@@ -45,11 +45,11 @@ const SignInPage = () => {
   }
 
   const handleNavigateSignUp = () => {
-    navigate('/sign-up') 
+    navigate('/sign-up')
   }
 
   const handleNavigateForgotPassword = () => {
-    navigate('/forgot-password') 
+    navigate('/forgot-password')
   }
 
   return (
@@ -64,12 +64,12 @@ const SignInPage = () => {
         <InputForm style={{marginBottom: '10px'}} placeholder="Nhập email" type="email" name="email" autoComplete="email" value={form.email} onChange={handleChange} required />
         <InputForm placeholder="Nhập mật khẩu" type="password" name="password" autoComplete="current-password" value={form.password} onChange={handleChange} required />
         {error && <Alert message={error} type="error" showIcon style={{ marginTop: 12 }} />}
-        <ButtonComponent 
+        <ButtonComponent
             bordered={false}
             size={40}
           htmlType="submit"
           loading={isSubmitting}
-            styleButton={{ 
+            styleButton={{
                 backgroundColor: 'rgb(255, 57, 69)',
                 height: '48px',
                 width: '100%',
@@ -81,16 +81,16 @@ const SignInPage = () => {
             styleTextButton={{color: '#fff', fontSize: '15px', fontWeight: '700'}}
         ></ButtonComponent>
         </form>
-        <p><WrapperTextLight onClick={handleNavigateForgotPassword} 
+        <p><WrapperTextLight onClick={handleNavigateForgotPassword}
          style={{ cursor: 'pointer' }}
-         > Quên mật khẩu? 
+         > Quên mật khẩu?
          </WrapperTextLight></p>
 
-        {/* 3. Thêm onClick và cursor pointer */}
+
         <p>
           Chưa có tài khoản?{' '}
-          <WrapperTextLight 
-            onClick={handleNavigateSignUp} 
+          <WrapperTextLight
+            onClick={handleNavigateSignUp}
             style={{ cursor: 'pointer' }}
           >
             Tạo tài khoản

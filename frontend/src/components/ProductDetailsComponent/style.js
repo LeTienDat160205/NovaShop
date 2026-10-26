@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { token } from './tokens';
 
-// ─── Layout wrappers ─────────────────────────────────────────────────────────
+
 
 export const PageWrapper = styled.div`
   background: ${token.colorBg};
@@ -23,10 +23,10 @@ export const ContentWrapper = styled.div`
   box-sizing: border-box;
 `;
 
-// Grid 3 cột:
-// Desktop (>=1200px): 320px 1fr 300px
-// Tablet (768px - 1199px): 300px 1fr (Khung mua hàng span 2 cột bên dưới)
-// Mobile (<768px): 1 cột
+
+
+
+
 export const ThreeColumnGrid = styled.div`
   display: grid;
   grid-template-columns: 320px 1fr 300px;
@@ -44,7 +44,7 @@ export const ThreeColumnGrid = styled.div`
   }
 `;
 
-// Wrapper cho PurchaseBox: ở tablet (768-1199px) span full 2 cột
+
 export const PurchaseBoxGridItem = styled.div`
   @media (max-width: ${token.breakpoint.desktop}) and (min-width: ${token.breakpoint.tablet}) {
     grid-column: 1 / -1;
@@ -64,7 +64,7 @@ export const StickyBox = styled.div`
   }
 `;
 
-// ─── Card trắng — block cơ bản ───────────────────────────────────────────────
+
 
 export const SectionCard = styled.div`
   background: ${token.colorCard};
@@ -92,7 +92,7 @@ export const CardTitle = styled.h3`
   }
 `;
 
-// ─── Giá cả ──────────────────────────────────────────────────────────────────
+
 
 export const PriceBlock = styled.div`
   display: flex;
@@ -147,7 +147,7 @@ export const DiscountBadge = styled.span`
   margin-left: 4px;
 `;
 
-// ─── Badge ────────────────────────────────────────────────────────────────────
+
 
 export const BadgeRow = styled.div`
   display: flex;
@@ -202,7 +202,7 @@ export const BadgeChip = styled.span`
   }
 `;
 
-// ─── Breadcrumb ───────────────────────────────────────────────────────────────
+
 
 export const BreadcrumbWrapper = styled.nav`
   font-size: 13px;
@@ -247,7 +247,7 @@ export const BreadcrumbWrapper = styled.nav`
   }
 `;
 
-// ─── Image Gallery ────────────────────────────────────────────────────────────
+
 
 export const GalleryContainer = styled.div`
   background: ${token.colorCard};
@@ -388,7 +388,7 @@ export const GalleryHintRow = styled.div`
   }
 `;
 
-// ─── Product Info ─────────────────────────────────────────────────────────────
+
 
 export const ProductName = styled.h1`
   font-size: 20px;
@@ -431,7 +431,7 @@ export const OriginText = styled.div`
   margin-top: 4px;
 `;
 
-// ─── Thông số kỹ thuật ────────────────────────────────────────────────────────
+
 
 export const SpecTable = styled.table`
   width: 100%;
@@ -480,7 +480,7 @@ export const SpecTable = styled.table`
   }
 `;
 
-// ─── Mô tả sản phẩm ──────────────────────────────────────────────────────────
+
 
 export const DescriptionContent = styled.div`
   font-size: 14px;
@@ -533,7 +533,7 @@ export const ExpandButton = styled.button`
   }
 `;
 
-// ─── Purchase Box ─────────────────────────────────────────────────────────────
+
 
 export const SellerBlock = styled.div`
   display: flex;
@@ -608,7 +608,7 @@ export const TotalPrice = styled.div`
   }
 `;
 
-// ─── Mobile Buy Bar (Thanh cố định đáy trên Mobile) ──────────────────────────
+
 
 export const MobileBuyBar = styled.div`
   display: none;
@@ -637,7 +637,7 @@ export const MobilePriceText = styled.span`
   white-space: nowrap;
 `;
 
-// ─── Review Section (Responsive trên Mobile) ─────────────────────────────────
+
 
 export const ReviewOverviewWrapper = styled.div`
   display: flex;
@@ -783,7 +783,7 @@ export const ReviewAvatar = styled.div`
   flex-shrink: 0;
 `;
 
-// ─── Placeholder ──────────────────────────────────────────────────────────────
+
 
 export const PlaceholderBox = styled.div`
   height: ${({ $height }) => $height || '120px'};
@@ -797,7 +797,7 @@ export const PlaceholderBox = styled.div`
   border: 1px dashed ${token.colorBorder};
 `;
 
-// ─── Recently Viewed / Explore More ──────────────────────────────────────────
+
 
 export const HorizontalScrollRow = styled.div`
   display: grid;
@@ -876,7 +876,7 @@ export const NotFoundWrapper = styled.div`
   p  { color: ${token.colorTextSecondary}; }
 `;
 
-// ─── Sản phẩm tương tự ────────────────────────────────────────────────────────
+
 export const SimilarProductsGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

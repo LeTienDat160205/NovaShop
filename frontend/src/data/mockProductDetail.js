@@ -1,10 +1,10 @@
-// Mock data cho trang chi tiết sản phẩm
-// File này tách riêng để dễ thay thế bằng API call sau này
+
+
 
 import productImage from '../assets/images/test.webp';
 import productImageSmall from '../assets/images/imagesmall.webp';
 
-// ─── Danh sách sản phẩm chi tiết theo ID ─────────────────────────────────────
+
 export const mockProductsMap = {
   '1': {
     _id: '1',
@@ -139,14 +139,14 @@ Tỷ lệ cân đối giữa DHA và ARA giúp hoàn thiện thị giác và c�
   },
 };
 
-// Hàm lấy dữ liệu chi tiết theo id, mặc định fallback về id '1'
+
 export const getMockProductDetail = (id) => {
   return mockProductsMap[id] || mockProductsMap['1'];
 };
 
 export const mockProductDetail = mockProductsMap['1'];
 
-// ─── Thông tin vận chuyển (mock cố định) ──────────────────────────────────────
+
 export const mockShipping = {
   address: 'Q. 1, P. Bến Nghé, Hồ Chí Minh',
   expressDelivery: {
@@ -162,7 +162,7 @@ export const mockShipping = {
   },
 };
 
-// ─── Đánh giá sản phẩm ────────────────────────────────────────────────────────
+
 export const mockReviews = [
   {
     id: 'r1',
@@ -211,7 +211,7 @@ export const mockReviews = [
   },
 ];
 
-// Phân bố sao đánh giá (mock)
+
 export const mockRatingDistribution = [
   { star: 5, count: 87 },
   { star: 4, count: 25 },
@@ -220,7 +220,7 @@ export const mockRatingDistribution = [
   { star: 1, count: 2 },
 ];
 
-// ─── Sản phẩm đã xem gần đây ──────────────────────────────────────────────────
+
 export const mockRecentlyViewed = Array.from({ length: 6 }, (_, i) => ({
   _id: `rv-${i + 1}`,
   name: [
@@ -238,7 +238,7 @@ export const mockRecentlyViewed = Array.from({ length: 6 }, (_, i) => ({
   discount: 10 + i,
 }));
 
-// ─── Sản phẩm khám phá thêm ───────────────────────────────────────────────────
+
 export const mockExploreMore = Array.from({ length: 12 }, (_, i) => ({
   _id: `em-${i + 1}`,
   name: [

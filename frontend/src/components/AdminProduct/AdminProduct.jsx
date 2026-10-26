@@ -33,18 +33,18 @@ import {
 const { Text } = Typography;
 const { TextArea } = Input;
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
 
-/** Định dạng giá tiền VND */
+
+
 function formatVND(value) {
   if (value == null || value === '') return '—';
   return Number(value).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 }
 
-/**
- * Xây dựng cây Cascader từ mảng chuỗi group ("A/B/C").
- * Trả về [{ value, label, children? }]
- */
+
+
+
+
 function buildCascaderOptions(groups) {
   const root = [];
   for (const g of groups) {
@@ -61,7 +61,7 @@ function buildCascaderOptions(groups) {
       nodes = node.children;
     }
   }
-  // Dọn children rỗng
+
   function clean(arr) {
     for (const n of arr) {
       if (n.children && n.children.length === 0) delete n.children;
@@ -72,19 +72,19 @@ function buildCascaderOptions(groups) {
   return root;
 }
 
-/** Chuyển chuỗi group → mảng path cho Cascader value */
+
 function groupToPath(group) {
   if (!group) return [];
   return group.split('/').map((p) => p.trim()).filter(Boolean);
 }
 
-// ─── Component chính ────────────────────────────────────────────────────────
+
 
 const AdminProduct = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  // Bảng
+
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -92,22 +92,22 @@ const AdminProduct = () => {
   const [search, setSearch] = useState('');
   const [tableLoading, setTableLoading] = useState(false);
 
-  // Danh mục Cascader
+
   const [cascaderOptions, setCascaderOptions] = useState([]);
 
-  // Modal thêm/sửa
+
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState(null); // null = thêm mới
+  const [editingId, setEditingId] = useState(null);
   const [savingLoading, setSavingLoading] = useState(false);
 
-  // Modal xóa
-  const [deleteTarget, setDeleteTarget] = useState(null); // { _id, name }
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Debounce search
+
   const searchTimer = useRef(null);
 
-  // ── Auth error handler ────────────────────────────────────────────────────
+
   const handleAuthError = useCallback(
     (err) => {
       if (err.status === 401 || err.status === 403) {
@@ -120,7 +120,7 @@ const AdminProduct = () => {
     [navigate],
   );
 
-  // ── Tải danh mục ──────────────────────────────────────────────────────────
+
   useEffect(() => {
     getAdminCategories()
       .then((res) => {
@@ -133,7 +133,7 @@ const AdminProduct = () => {
       });
   }, [handleAuthError]);
 
-  // ── Tải danh sách sản phẩm ───────────────────────────────────────────────
+
   const fetchProducts = useCallback(
     async (p = page, q = search) => {
       setTableLoading(true);
@@ -153,28 +153,26 @@ const AdminProduct = () => {
 
   useEffect(() => {
     fetchProducts(page, search);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [fetchProducts, page, search]);
 
-  // ── Xử lý ô tìm kiếm ─────────────────────────────────────────────────────
+
   const onSearchChange = (e) => {
     const q = e.target.value;
     clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
       setSearch(q);
       setPage(1);
-      fetchProducts(1, q);
     }, 400);
   };
 
-  // ── Mở modal thêm mới ─────────────────────────────────────────────────────
+
   const openCreate = () => {
     setEditingId(null);
     form.resetFields();
     setModalOpen(true);
   };
 
-  // ── Mở modal sửa ─────────────────────────────────────────────────────────
+
   const openEdit = async (record) => {
     setEditingId(record._id);
     setModalOpen(true);
@@ -202,11 +200,11 @@ const AdminProduct = () => {
     }
   };
 
-  // ── Lưu (tạo / cập nhật) ──────────────────────────────────────────────────
+
   const onSave = async (values) => {
     setSavingLoading(true);
     try {
-      // Chuẩn bị dữ liệu
+
       const groupStr = Array.isArray(values.group) ? values.group.join('/') : '';
       const images = (values.images ?? [])
         .map((item) => (typeof item === 'object' ? item.url : item))
@@ -244,7 +242,7 @@ const AdminProduct = () => {
     }
   };
 
-  // ── Xóa sản phẩm ─────────────────────────────────────────────────────────
+
   const onDelete = async () => {
     if (!deleteTarget) return;
     setDeleteLoading(true);
@@ -252,7 +250,7 @@ const AdminProduct = () => {
       await deleteAdminProduct(deleteTarget._id);
       antMessage.success('Xóa sản phẩm thành công');
       setDeleteTarget(null);
-      // Nếu trang hiện tại trở nên rỗng → lùi 1 trang
+
       const remaining = total - 1;
       const maxPage = Math.max(1, Math.ceil(remaining / limit));
       const nextPage = Math.min(page, maxPage);
@@ -265,7 +263,7 @@ const AdminProduct = () => {
     }
   };
 
-  // ── Cột bảng ─────────────────────────────────────────────────────────────
+
   const columns = [
     {
       title: 'Ảnh',
@@ -353,10 +351,10 @@ const AdminProduct = () => {
     },
   ];
 
-  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
     <div style={{ padding: '16px 24px' }}>
-      {/* Header */}
+
       <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
         <Col>
           <h2 style={{ margin: 0 }}>Quản lý sản phẩm</h2>
@@ -376,7 +374,7 @@ const AdminProduct = () => {
         </Col>
       </Row>
 
-      {/* Bảng */}
+
       <Table
         rowKey="_id"
         columns={columns}
@@ -393,7 +391,7 @@ const AdminProduct = () => {
         }}
       />
 
-      {/* ── Modal Thêm / Sửa ── */}
+
       <Modal
         title={editingId ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
         open={modalOpen}
@@ -485,7 +483,7 @@ const AdminProduct = () => {
             <TextArea rows={4} placeholder="Nhập mô tả..." />
           </Form.Item>
 
-          {/* Danh sách ảnh */}
+
           <Form.Item label="Ảnh sản phẩm (URL)">
             <Form.List name="images">
               {(fields, { add, remove }) => (
@@ -503,7 +501,7 @@ const AdminProduct = () => {
                           style={{ color: '#ff4d4f', fontSize: 18, cursor: 'pointer' }}
                         />
                       </Col>
-                      {/* Preview nhỏ */}
+
                       <Col span={24} style={{ paddingLeft: 0 }}>
                         <Form.Item shouldUpdate noStyle>
                           {({ getFieldValue }) => {
@@ -536,7 +534,7 @@ const AdminProduct = () => {
             </Form.List>
           </Form.Item>
 
-          {/* Thông số kỹ thuật */}
+
           <Form.Item label="Thông số kỹ thuật">
             <Form.List name="specifications">
               {(fields, { add, remove }) => (
@@ -576,7 +574,7 @@ const AdminProduct = () => {
         </Form>
       </Modal>
 
-      {/* ── Modal Xác nhận Xóa ── */}
+
       <Modal
         title="Xác nhận xóa sản phẩm"
         open={!!deleteTarget}

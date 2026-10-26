@@ -21,7 +21,7 @@ const CardComponent = ({ product, onClick }) => {
 
     navigate(`/product-details/${product?._id}`);
   }
-  // Lấy ảnh: Ưu tiên product.image hoặc tấm ảnh đầu tiên trong mảng product.images
+
   const productImage =
     product?.image ||
     (Array.isArray(product?.images) && product?.images[0]) ||

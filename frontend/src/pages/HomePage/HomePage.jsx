@@ -40,14 +40,14 @@ const HomePage = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Mỗi lần tải 18 sản phẩm, tương ứng 3 hàng nếu mỗi hàng có 6 sản phẩm
+
   const ITEMS_PER_PAGE = 18;
 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
 
-  // Tải sản phẩm theo từng trang
+
   const fetchProducts = async (pageNumber = 1) => {
     if (pageNumber > 1) {
       setLoadingMore(true);
@@ -63,10 +63,10 @@ const HomePage = () => {
         const newProducts = res.data || [];
 
         if (pageNumber === 1) {
-          // Lần đầu chỉ hiển thị 18 sản phẩm
+
           setProducts(newProducts);
         } else {
-          // Khi xem thêm, nối sản phẩm mới vào danh sách hiện tại
+
           setProducts((prevProducts) => {
             const existingIds = new Set(
               prevProducts.map((product) => product._id)
@@ -82,7 +82,7 @@ const HomePage = () => {
 
         setPage(pageNumber);
 
-        // Nếu trang vừa tải có ít hơn 18 sản phẩm thì đã hết dữ liệu
+
         setHasMore(newProducts.length === ITEMS_PER_PAGE);
       }
     } catch (error) {
@@ -101,7 +101,7 @@ const HomePage = () => {
     return () => { active = false; };
   }, []);
 
-  // Tải thêm 18 sản phẩm khi người dùng nhấn nút
+
   const handleLoadMore = () => {
     if (!initialLoading && !loadingMore && hasMore) {
       fetchProducts(page + 1);
@@ -115,7 +115,7 @@ const HomePage = () => {
 
   return (
     <>
-      {/* Danh mục sản phẩm */}
+
       <div
         style={{
           backgroundColor: "#ffffff",
@@ -141,7 +141,7 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Nội dung trang chủ */}
+
       <div
         id="container"
         style={{
@@ -152,7 +152,7 @@ const HomePage = () => {
           boxSizing: "border-box",
         }}
       >
-        {/* Banner */}
+
         <SliderComponent arrImages={[slider1, slider2, slider3]} />
 
         <TopDeals
@@ -168,7 +168,7 @@ const HomePage = () => {
           showViewAll
         />
 
-        {/* Danh sách sản phẩm */}
+
         <section
           style={{
             background: '#fff',
@@ -219,7 +219,7 @@ const HomePage = () => {
           </div>
           )}
 
-        {/* Nút xem thêm */}
+
         {hasMore && !initialLoading && products.length > 0 && (
           <div
             style={{
@@ -250,7 +250,7 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* Thông báo khi đã tải hết sản phẩm */}
+
           {!hasMore && !initialLoading && products.length > 0 && (
           <div
             style={{

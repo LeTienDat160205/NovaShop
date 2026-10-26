@@ -1,4 +1,7 @@
 import math
+import re
+import unicodedata
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 
@@ -49,6 +52,88 @@ def _product_categories(product):
         categories = list(categories)
         return [str(categories[-1]).strip().casefold()] if categories else []
     return [str(categories).strip().casefold()]
+
+
+def _flatten_content(value):
+    if isinstance(value, dict):
+        return " ".join(
+            f"{key} {_flatten_content(item)}"
+            for key, item in value.items()
+        )
+    if isinstance(value, (list, tuple, set)):
+        return " ".join(_flatten_content(item) for item in value)
+    return str(value or "")
+
+
+def _content_terms(product):
+    fields = (
+        (product.get("name"), 2.5),
+        (product.get("brand"), 2),
+        (_product_categories(product), 3),
+        (product.get("group"), 1.5),
+        (product.get("specifications"), 1),
+        (product.get("description"), 0.5),
+    )
+    terms = Counter()
+    for value, weight in fields:
+        normalized = unicodedata.normalize("NFD", _flatten_content(value))
+        normalized = "".join(
+            character
+            for character in normalized
+            if unicodedata.category(character) != "Mn"
+        ).replace("đ", "d").replace("Đ", "d").casefold()
+        for token in re.findall(r"[a-z0-9]+", normalized):
+            terms[token] += weight
+    return terms
+
+
+def build_tfidf_vectors(products):
+    documents = {
+        str(product.get("_id", "")): _content_terms(product)
+        for product in products
+        if product.get("_id")
+    }
+    document_frequency = Counter()
+    for terms in documents.values():
+        document_frequency.update(terms.keys())
+
+    document_count = len(documents)
+    vectors = {}
+    for product_id, terms in documents.items():
+        vector = {
+            term: (1 + math.log(count))
+            * (math.log((1 + document_count) / (1 + document_frequency[term])) + 1)
+            for term, count in terms.items()
+        }
+        norm = math.sqrt(sum(weight ** 2 for weight in vector.values()))
+        if norm:
+            vectors[product_id] = {
+                term: weight / norm for term, weight in vector.items()
+            }
+    return vectors
+
+
+def _cosine_similarity(first, second):
+    if len(first) > len(second):
+        first, second = second, first
+    return sum(weight * second.get(term, 0) for term, weight in first.items())
+
+
+def _profile_vector(user_events, product_vectors, now):
+    profile = {}
+    for event in user_events:
+        product_id = str(event.get("productId", ""))
+        weight = _interaction_weight(event, now)
+        vector = product_vectors.get(product_id)
+        if not vector or not weight:
+            continue
+        for term, term_weight in vector.items():
+            profile[term] = profile.get(term, 0) + weight * term_weight
+
+    norm = math.sqrt(sum(weight ** 2 for weight in profile.values()))
+    if not norm:
+        return {}
+    return {term: weight / norm for term, weight in profile.items()}
 
 
 def rank_products(
@@ -269,55 +354,27 @@ def rank_content_profile_products(
     profile_products,
     user_events,
     limit=12,
+    content_vectors=None,
 ):
     now = datetime.now(timezone.utc)
-    product_by_id = {
-        str(product.get("_id", "")): product
-        for product in profile_products
-    }
-    interacted_product_ids = set()
-    category_profile = {}
-    brand_profile = {}
+    vectors = content_vectors or build_tfidf_vectors(profile_products)
+    profile = _profile_vector(user_events, vectors, now)
+    if not profile:
+        return []
 
+    interacted_product_ids = set()
     for event in user_events:
         product_id = str(event.get("productId", ""))
         weight = _interaction_weight(event, now)
         if not product_id or not weight:
             continue
         interacted_product_ids.add(product_id)
-        source_product = product_by_id.get(product_id)
-        if not source_product:
-            continue
-
-        for normalized_category in _product_categories(source_product):
-            if normalized_category:
-                category_profile[normalized_category] = (
-                    category_profile.get(normalized_category, 0) + weight
-                )
-
-        brand = str(source_product.get("brand") or "").strip().casefold()
-        if brand:
-            brand_profile[brand] = brand_profile.get(brand, 0) + weight
-
-    if not category_profile and not brand_profile:
-        return []
-
-    category_total = sum(category_profile.values()) or 1
-    brand_total = sum(brand_profile.values()) or 1
     content_scores = {}
     for product in products:
         product_id = str(product.get("_id", ""))
         if not product_id or product_id in interacted_product_ids:
             continue
-
-        category_score = sum(
-            category_profile.get(category, 0)
-            for category in _product_categories(product)
-        ) / category_total
-
-        brand = str(product.get("brand") or "").strip().casefold()
-        brand_score = brand_profile.get(brand, 0) / brand_total
-        score = 0.75 * category_score + 0.25 * brand_score
+        score = _cosine_similarity(profile, vectors.get(product_id, {}))
         if score > 0:
             content_scores[product_id] = score
 
@@ -344,3 +401,48 @@ def rank_content_profile_products(
         )
     )
     return ranked[:limit]
+
+
+def rank_similar_products(
+    products,
+    product_id,
+    limit=8,
+    content_vectors=None,
+):
+    product_id = str(product_id)
+    vectors = content_vectors or build_tfidf_vectors(products)
+    source_vector = vectors.get(product_id)
+    if not source_vector:
+        return []
+
+    scored_products = []
+    for product in products:
+        candidate_id = str(product.get("_id", ""))
+        if not candidate_id or candidate_id == product_id:
+            continue
+        score = _cosine_similarity(source_vector, vectors.get(candidate_id, {}))
+        if score > 0:
+            scored_products.append((score, product))
+
+    if not scored_products:
+        return []
+
+    max_score = max(score for score, _ in scored_products)
+    for score, product in scored_products:
+        product["similarityScore"] = round(score, 4)
+        default_score = max(
+            0,
+            min(1, _as_number(product.get("recommendationScore")) / 5),
+        )
+        product["recommendationScore"] = round(
+            0.8 * score / max_score + 0.2 * default_score,
+            3,
+        )
+
+    scored_products.sort(
+        key=lambda item: (
+            -item[0],
+            -_as_number(item[1].get("rating")),
+        )
+    )
+    return [product for _, product in scored_products[:limit]]

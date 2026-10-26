@@ -11,7 +11,7 @@ const interactionSchema = new mongoose.Schema(
         }
     },
     {
-        timestamps: true // Tự động tạo createdAt lưu thời điểm tương tác
+        timestamps: true
     }
 );
 

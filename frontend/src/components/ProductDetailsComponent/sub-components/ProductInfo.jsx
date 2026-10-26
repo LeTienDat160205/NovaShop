@@ -47,7 +47,7 @@ const ProductInfo = ({ product }) => {
 
   return (
     <SectionCard style={{ marginBottom: 0 }}>
-      {/* Badge row với white-space nowrap cho Thương hiệu */}
+
       <BadgeRow>
         <BadgeChip className="top-deal">TOP DEAL</BadgeChip>
         <BadgeChip className="exchange">30 NGÀY ĐỔI TRẢ</BadgeChip>
@@ -62,10 +62,10 @@ const ProductInfo = ({ product }) => {
         )}
       </BadgeRow>
 
-      {/* Tên sản phẩm */}
+
       {name && <ProductName>{name}</ProductName>}
 
-      {/* Hàng rating (chuẩn Tiki: 4.7 ★★★★★ (100) | Đã bán 23k) */}
+
       {(rating || reviewCount || sold) && (
         <RatingRow>
           {rating && (
@@ -87,10 +87,10 @@ const ProductInfo = ({ product }) => {
         </RatingRow>
       )}
 
-      {/* Xuất xứ */}
+
       {origin && <OriginText>Made in {origin}</OriginText>}
 
-      {/* Khối giá */}
+
       <PriceBlock>
         {priceFormatted && (
           <PriceText>

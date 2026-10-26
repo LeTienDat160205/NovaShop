@@ -26,7 +26,7 @@ const RecentlyViewed = ({ currentProductId }) => {
           return;
         }
 
-        // Lấy sản phẩm thật từ MongoDB
+
         const response = await ProductService.getAllProduct();
 
         if (response?.status !== 'OK') {
@@ -36,7 +36,7 @@ const RecentlyViewed = ({ currentProductId }) => {
 
         const allProducts = response.data || [];
 
-        // Lấy đúng những sản phẩm đã xem
+
         const viewedProducts = viewedIds
           .filter((id) => id !== currentProductId)
           .map((id) =>

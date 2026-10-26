@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 const Product = require('../models/ProductModel');
 
-// Hàm escape các ký tự đặc biệt trong biểu thức chính quy (Regex)
+
 const escapeRegex = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
 
-// Hàm parse số nguyên dương an toàn, nếu không hợp lệ thì trả về giá trị mặc định
+
 const parsePositiveInt = (value, defaultValue) => {
     const num = Number(value);
     if (!Number.isFinite(num) || !Number.isInteger(num) || num < 1) {
@@ -15,7 +15,7 @@ const parsePositiveInt = (value, defaultValue) => {
     return num;
 };
 
-// Hàm validate specifications: từ chối khóa bắt đầu bằng "$", chứa "." hoặc "__proto__"; tối đa 100 khóa; giá trị chuỗi tối đa 5000 ký tự
+
 const validateSpecifications = (specs) => {
     if (specs === null || specs === undefined) {
         return { valid: true, data: {} };
@@ -60,10 +60,10 @@ const validateSpecifications = (specs) => {
     return { valid: true, data: cleanSpecs };
 };
 
-/**
- * GET /api/admin/products/categories
- * Lấy danh sách các giá trị group khác nhau, loại bỏ rỗng/null, sắp xếp A-Z
- */
+
+
+
+
 const getAdminCategories = async (req, res) => {
     try {
         const categories = await Product.aggregate([
@@ -98,10 +98,10 @@ const getAdminCategories = async (req, res) => {
     }
 };
 
-/**
- * GET /api/admin/products
- * Danh sách sản phẩm phân trang, tìm kiếm theo tên, sắp xếp _id: -1
- */
+
+
+
+
 const getAdminProducts = async (req, res) => {
     try {
         const page = parsePositiveInt(req.query.page, 1);
@@ -138,10 +138,10 @@ const getAdminProducts = async (req, res) => {
     }
 };
 
-/**
- * GET /api/admin/products/:id
- * Chi tiết 1 sản phẩm
- */
+
+
+
+
 const getAdminProductDetails = async (req, res) => {
     try {
         const { id } = req.params;
@@ -172,15 +172,15 @@ const getAdminProductDetails = async (req, res) => {
     }
 };
 
-/**
- * POST /api/admin/products
- * Tạo sản phẩm mới
- */
+
+
+
+
 const createAdminProduct = async (req, res) => {
     try {
         const raw = req.body || {};
 
-        // 1. Validate 'name' (bắt buộc, 1 - 300 ký tự)
+
         if (typeof raw.name !== 'string' || !raw.name.trim()) {
             return res.status(400).json({
                 status: 'ERR',
@@ -195,7 +195,7 @@ const createAdminProduct = async (req, res) => {
             });
         }
 
-        // 2. Validate 'price' (bắt buộc, số hữu hạn > 0)
+
         if (typeof raw.price !== 'number' || !Number.isFinite(raw.price) || raw.price <= 0) {
             return res.status(400).json({
                 status: 'ERR',
@@ -204,7 +204,7 @@ const createAdminProduct = async (req, res) => {
         }
         const price = Number(raw.price);
 
-        // 3. Validate 'listPrice' (nếu có, phải >= price)
+
         let listPrice = undefined;
         if (raw.listPrice !== undefined && raw.listPrice !== null && raw.listPrice !== '') {
             if (typeof raw.listPrice !== 'number' || !Number.isFinite(raw.listPrice)) {
@@ -221,13 +221,13 @@ const createAdminProduct = async (req, res) => {
             }
             listPrice = Number(raw.listPrice);
         } else {
-            listPrice = price; // Mặc định bằng giá bán nếu không nhập
+            listPrice = price;
         }
 
-        // 4. Validate 'brand' (chuỗi nếu có)
+
         const brand = typeof raw.brand === 'string' ? raw.brand.trim() : '';
 
-        // 5. Validate 'description' (chuỗi <= 20000 ký tự)
+
         let description = '';
         if (raw.description !== undefined && raw.description !== null) {
             if (typeof raw.description !== 'string') {
@@ -245,7 +245,7 @@ const createAdminProduct = async (req, res) => {
             description = raw.description;
         }
 
-        // 6. Validate 'images' (mảng chuỗi URL http/https, tối đa 10)
+
         let images = [];
         if (raw.images !== undefined && raw.images !== null) {
             if (!Array.isArray(raw.images)) {
@@ -272,7 +272,7 @@ const createAdminProduct = async (req, res) => {
             images = raw.images.map((img) => img.trim());
         }
 
-        // 7. Validate 'specifications' (object thông thường, khóa không rỗng, giá trị ép thành chuỗi)
+
         let specifications = {};
         if (raw.specifications !== undefined && raw.specifications !== null) {
             const specResult = validateSpecifications(raw.specifications);
@@ -285,7 +285,7 @@ const createAdminProduct = async (req, res) => {
             specifications = specResult.data;
         }
 
-        // 8. Đồng bộ danh mục: group & categoryPath
+
         let group = '';
         let categoryPath = [];
 
@@ -297,7 +297,7 @@ const createAdminProduct = async (req, res) => {
             categoryPath = group.split('/').map((s) => s.trim()).filter(Boolean);
         }
 
-        // Dữ liệu sản phẩm mới (chỉ nhận whitelist và tự sinh các trường bắt buộc)
+
         const productData = {
             name,
             brand,
@@ -328,10 +328,10 @@ const createAdminProduct = async (req, res) => {
     }
 };
 
-/**
- * PUT /api/admin/products/:id
- * Cập nhật sản phẩm
- */
+
+
+
+
 const updateAdminProduct = async (req, res) => {
     try {
         const { id } = req.params;
@@ -353,7 +353,7 @@ const updateAdminProduct = async (req, res) => {
         const raw = req.body || {};
         const updateData = {};
 
-        // 1. Kiểm tra 'name' nếu có gửi
+
         if (raw.name !== undefined) {
             if (typeof raw.name !== 'string' || !raw.name.trim()) {
                 return res.status(400).json({
@@ -371,7 +371,7 @@ const updateAdminProduct = async (req, res) => {
             updateData.name = name;
         }
 
-        // 2. Kiểm tra 'price' & 'listPrice' theo giá trị hiệu lực (Effective Price / Effective ListPrice)
+
         let effectivePrice = Number(existingProduct.price);
         if (raw.price !== undefined) {
             if (typeof raw.price !== 'number' || !Number.isFinite(raw.price) || raw.price <= 0) {
@@ -408,7 +408,7 @@ const updateAdminProduct = async (req, res) => {
             effectiveListPrice = existingListPrice;
         }
 
-        // Nếu có giá gốc hiệu lực thì bắt buộc phải >= giá bán hiệu lực
+
         if (effectiveListPrice !== null && effectiveListPrice !== undefined) {
             if (effectiveListPrice < effectivePrice) {
                 return res.status(400).json({
@@ -422,17 +422,17 @@ const updateAdminProduct = async (req, res) => {
             updateData.listPrice = effectiveListPrice;
             updateData.list_price = effectiveListPrice;
         } else if (raw.price !== undefined && existingListPrice !== null) {
-            // Đồng bộ giữ nguyên list_price cũ khi chỉ đổi price
+
             updateData.listPrice = existingListPrice;
             updateData.list_price = existingListPrice;
         }
 
-        // 3. Brand
+
         if (raw.brand !== undefined) {
             updateData.brand = typeof raw.brand === 'string' ? raw.brand.trim() : '';
         }
 
-        // 4. Description
+
         if (raw.description !== undefined) {
             if (raw.description !== null) {
                 if (typeof raw.description !== 'string') {
@@ -453,7 +453,7 @@ const updateAdminProduct = async (req, res) => {
             }
         }
 
-        // 5. Images
+
         if (raw.images !== undefined) {
             if (raw.images !== null) {
                 if (!Array.isArray(raw.images)) {
@@ -483,7 +483,7 @@ const updateAdminProduct = async (req, res) => {
             }
         }
 
-        // 6. Specifications
+
         if (raw.specifications !== undefined) {
             if (raw.specifications !== null) {
                 const specResult = validateSpecifications(raw.specifications);
@@ -499,7 +499,7 @@ const updateAdminProduct = async (req, res) => {
             }
         }
 
-        // 7. Group & CategoryPath
+
         if (raw.categoryPath !== undefined && Array.isArray(raw.categoryPath)) {
             const cleanPath = raw.categoryPath.map((s) => String(s).trim()).filter(Boolean);
             updateData.categoryPath = cleanPath;
@@ -510,7 +510,7 @@ const updateAdminProduct = async (req, res) => {
             updateData.categoryPath = cleanGroup.split('/').map((s) => s.trim()).filter(Boolean);
         }
 
-        // Kiểm tra nếu body không chứa trường dữ liệu hợp lệ nào
+
         if (Object.keys(updateData).length === 0) {
             return res.status(400).json({
                 status: 'ERR',
@@ -518,7 +518,7 @@ const updateAdminProduct = async (req, res) => {
             });
         }
 
-        // Cập nhật bằng $set chỉ những trường trong whitelist được gửi lên
+
         const updatedProduct = await Product.findByIdAndUpdate(
             id,
             { $set: updateData },
@@ -538,10 +538,10 @@ const updateAdminProduct = async (req, res) => {
     }
 };
 
-/**
- * DELETE /api/admin/products/:id
- * Xóa cứng một sản phẩm
- */
+
+
+
+
 const deleteAdminProduct = async (req, res) => {
     try {
         const { id } = req.params;

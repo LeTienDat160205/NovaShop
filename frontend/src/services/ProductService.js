@@ -34,7 +34,8 @@ export const getRecommendations = async (
   page = 1,
 ) => {
   const { token } = getAuthSession();
-  const res = await axios.get(`${API_URL}/recommendations`, {
+  const endpoint = token ? '/recommendations' : '/recommendations/default';
+  const res = await axios.get(`${API_URL}${endpoint}`, {
     params: {
       limit,
       page,

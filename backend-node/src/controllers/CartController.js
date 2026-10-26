@@ -5,7 +5,7 @@ const Product = require('../models/ProductModel');
 const { refreshCartPrices, formatCart } = require('../utils/cartUtils');
 const recordInteraction = require('../utils/recordInteraction');
 
-// GET /api/cart
+
 const getCart = async (req, res) => {
     try {
         let cart = await Cart.findOne({ userId: req.user.id });
@@ -38,7 +38,7 @@ const getCart = async (req, res) => {
     }
 };
 
-// POST /api/cart/items
+
 const addToCart = async (req, res) => {
     try {
         const { productId, quantity = 1 } = req.body || {};
@@ -103,7 +103,7 @@ const addToCart = async (req, res) => {
     }
 };
 
-// PATCH /api/cart/items/:productId
+
 const updateQuantity = async (req, res) => {
     try {
         const { productId } = req.params;
@@ -152,7 +152,7 @@ const updateQuantity = async (req, res) => {
     }
 };
 
-// DELETE /api/cart/items/:productId
+
 const removeFromCart = async (req, res) => {
     try {
         const { productId } = req.params;
@@ -187,7 +187,7 @@ const removeFromCart = async (req, res) => {
     }
 };
 
-// DELETE /api/cart
+
 const clearCart = async (req, res) => {
     try {
         const cart = await Cart.findOne({ userId: req.user.id });

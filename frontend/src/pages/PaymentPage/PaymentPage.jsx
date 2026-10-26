@@ -82,7 +82,7 @@ const PaymentPage = () => {
             setIsOpenModalUpdateInfo(false);
             message.success("Cập nhật thông tin giao hàng thành công");
         } catch {
-            // Form không hợp lệ, giữ nguyên modal để người dùng sửa.
+            return;
         }
     };
 
@@ -185,7 +185,7 @@ const PaymentPage = () => {
                 ) : (
                     <div className="payment-layout" style={{ display: "grid", gridTemplateColumns: "minmax(0, 6.5fr) minmax(350px, 3.5fr)", gap: 28, alignItems: "start" }}>
                         <div>
-                            {/* ĐỊA CHỈ NHẬN HÀNG */}
+
                             <section style={cardStyle}>
                                 <h3 style={{ marginTop: 0, marginBottom: 18 }}>
                                     <EnvironmentOutlined style={{ color: "#9255fd", marginRight: 8 }} />
@@ -209,7 +209,7 @@ const PaymentPage = () => {
                                 </div>
                             </section>
 
-                            {/* PHƯƠNG THỨC GIAO HÀNG */}
+
                             <section style={cardStyle}>
                                 <h3 style={{ marginTop: 0 }}>Phương thức giao hàng</h3>
                                 <Radio checked style={{ display: "flex", alignItems: "flex-start", whiteSpace: "normal" }}>
@@ -223,7 +223,7 @@ const PaymentPage = () => {
                                 <div style={{ marginTop: 16, color: "#00a650" }}>Miễn phí vận chuyển</div>
                             </section>
 
-                            {/* PHƯƠNG THỨC THANH TOÁN */}
+
                             <section style={cardStyle}>
                                 <h3 style={{ marginTop: 0, marginBottom: 20 }}>Phương thức thanh toán</h3>
                                 <Radio.Group value={payment} onChange={(event) => setPayment(event.target.value)} style={{ width: "100%" }}>
@@ -237,7 +237,7 @@ const PaymentPage = () => {
                             </section>
                         </div>
 
-                        {/* TÓM TẮT ĐƠN HÀNG */}
+
                         <aside style={{ ...cardStyle, position: "sticky", top: 16 }}>
                             <h3 style={{ marginTop: 0 }}>Đơn hàng ({selectedItems.length} sản phẩm)</h3>
 
@@ -299,7 +299,7 @@ const PaymentPage = () => {
                 )}
             </div>
 
-            {/* MODAL CHỈNH SỬA ĐỊA CHỈ */}
+
             <ModalComponent
                 title="Cập nhật thông tin giao hàng"
                 open={isOpenModalUpdateInfo}

@@ -149,7 +149,7 @@ const MyOrderPage = () => {
               borderRadius: 8,
             }}
           >
-            {/* Danh sách sản phẩm */}
+
             {(order.items || []).map((item) => (
               <div
                 key={item.productId}
@@ -196,7 +196,7 @@ const MyOrderPage = () => {
               </div>
             ))}
 
-            {/* Tổng tiền */}
+
             <div
               style={{
                 textAlign: "right",
@@ -215,7 +215,7 @@ const MyOrderPage = () => {
               </strong>
             </div>
 
-            {/* Nút xem chi tiết */}
+
             <div style={{ marginTop: 16 }}>
               <Space wrap>
                 <Button onClick={() => navigate(`/details-order/${order.id}`)}>

@@ -11,7 +11,7 @@ const ShippingInfo = () => {
     <SectionCard>
       <CardTitle style={{ fontSize: 16 }}>Thông tin vận chuyển</CardTitle>
 
-      {/* Địa chỉ giao hàng */}
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <EnvironmentOutlined style={{ color: token.colorTextSecondary, fontSize: 16 }} />
@@ -26,7 +26,7 @@ const ShippingInfo = () => {
 
       <Divider style={{ margin: '12px 0' }} />
 
-      {/* Giao siêu tốc 2h có badge NOW đỏ nghiêng */}
+
       <div style={{ marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
           <span style={{
@@ -53,7 +53,7 @@ const ShippingInfo = () => {
         </div>
       </div>
 
-      {/* Giao tiêu chuẩn */}
+
       <div style={{ paddingLeft: 38 }}>
         <div style={{ fontSize: 14, fontWeight: 600, color: token.colorTextPrimary, marginBottom: 2 }}>
           {standardDelivery.label}

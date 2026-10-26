@@ -14,7 +14,7 @@ const orderSchema = new mongoose.Schema(
         shippingName: { type: String, required: true },
         shippingPhone: { type: String, required: true },
         shippingAddress: { type: String, required: true },
-        paymentMethod: { type: String, required: true }, // 'COD', 'MOMO', 'VNPAY', ...
+        paymentMethod: { type: String, required: true },
         paymentStatus: {
             type: String,
             enum: ['NotRequired', 'Pending', 'Paid', 'Failed'],

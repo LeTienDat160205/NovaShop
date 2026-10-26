@@ -52,20 +52,20 @@ const HeaderComponent = () => {
     navigate("/");
   };
 
-  // Xử lý tìm kiếm
+
   const handleSearch = () => {
     const keyword = search.trim();
     if (!keyword) return;
 
-    // Kiểm tra xem hiện tại có đang ở trang category: /products/:type không
+
     const matchCategory = location.pathname.match(/^\/products\/([^/?]+)/);
     const currentCategory = matchCategory ? matchCategory[1] : null;
 
     if (currentCategory && currentCategory !== "all") {
-      // Đang ở danh mục (vd: tai nghe, loa...) -> Chỉ tìm kiếm trong danh mục đó
+
       navigate(`/products/${currentCategory}?search=${encodeURIComponent(keyword)}`);
     } else {
-      // Ở trang chủ hoặc nơi khác -> Tìm kiếm toàn sàn (vào trang all hoặc trang tìm kiếm chung)
+
       navigate(`/products/all?search=${encodeURIComponent(keyword)}`);
     }
   };

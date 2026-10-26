@@ -1,0 +1,7 @@
+# Ignore environment files and node_modules
+/backend-node/.env
+/rec-engine-python/README.md
+node_modules/
+*.log
+dist/
+.env

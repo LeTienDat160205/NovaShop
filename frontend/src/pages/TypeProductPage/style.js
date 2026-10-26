@@ -1,13 +1,13 @@
 import styled from "styled-components";
 import { Col } from "antd";
 
-// export const WrapperProducts = styled.div`
-//     display: flex;
-//     justify-content: center;
-//     gap: 30px;
-//     margin-top: 20px;
-//     flex-wrap: wrap;
-// `
+
+
+
+
+
+
+
 export const WrapperProducts = styled.div`
   display: grid;
   grid-template-columns: repeat(6, 200px);

@@ -14,7 +14,7 @@ import {
 const TypeProductPage = () => {
   const { type } = useParams();
   const [searchParams] = useSearchParams();
-  const searchKeyword = searchParams.get("search") || ""; // Lấy từ khóa từ URL
+  const searchKeyword = searchParams.get("search") || "";
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
@@ -32,7 +32,7 @@ const TypeProductPage = () => {
   const displayName = isAll ? "Tất cả sản phẩm" : (currentCategory ? currentCategory.name : type);
   const keyword = isAll ? "all" : getDbKeywordBySlug(type);
 
-  // Lấy danh sách thương hiệu của category hiện tại
+
   const availableBrands = useMemo(() => {
     return getBrandsByCategoryKeyword(isAll ? "" : keyword);
   }, [keyword, isAll]);
@@ -51,12 +51,12 @@ const TypeProductPage = () => {
     });
   };
 
-  // Reset filter khi đổi category hoặc đổi từ khóa tìm kiếm
+
   useEffect(() => {
     handleResetFilters();
   }, [type, searchKeyword]);
 
-  // Fetch dữ liệu từ API khi keyword hoặc searchKeyword thay đổi
+
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -77,31 +77,31 @@ const TypeProductPage = () => {
     fetchProducts();
   }, [keyword, searchKeyword]);
 
-  // Bộ lọc Client-side (với các filter bên thanh navbar phụ)
+
   const filteredProducts = useMemo(() => {
     return products.filter((item) => {
-      // 1. Tên sản phẩm phụ từ navbar (nếu có)
+
       if (
         filters.name &&
         !item.name?.toLowerCase().includes(filters.name.toLowerCase().trim())
       ) {
         return false;
       }
-      // 2. Thương hiệu
+
       if (
         filters.brand &&
         item.brand?.toLowerCase() !== filters.brand.toLowerCase()
       ) {
         return false;
       }
-      // 3. Đánh giá
+
       if (
         filters.rating &&
         Number(item.rating || 0) < Number(filters.rating)
       ) {
         return false;
       }
-      // 4. Khoảng giá
+
       if (filters.minPrice !== null && item.price < filters.minPrice) {
         return false;
       }

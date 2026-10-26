@@ -212,7 +212,7 @@ const ProfilePage = () => {
 
       <Card style={{width: "100%", maxWidth: 1300, borderRadius: 8,fontSize: 16,}}>
         <Row gutter={[32, 24]}>
-          {/* CỘT TRÁI */}
+
           <Col xs={24} lg={13}>
             <Title level={5} style={{ fontWeight: 400, color: "#666" }}>
               Thông tin cá nhân
@@ -331,7 +331,7 @@ const ProfilePage = () => {
             </Form>
           </Col>
 
-          {/* CỘT PHẢI */}
+
           <Col
             xs={24}
             lg={11}

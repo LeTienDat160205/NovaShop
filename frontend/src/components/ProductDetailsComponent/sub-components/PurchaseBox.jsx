@@ -38,7 +38,7 @@ const PurchaseBox = ({
   return (
     <StickyBox>
       <SectionCard>
-        {/* Khối người bán */}
+
         <SellerBlock>
           <img
             src={logo}
@@ -60,7 +60,7 @@ const PurchaseBox = ({
           </div>
         </SellerBlock>
 
-        {/* Số lượng */}
+
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 500, color: token.colorTextPrimary, marginBottom: 8 }}>
             Số Lượng
@@ -82,7 +82,7 @@ const PurchaseBox = ({
           </QuantityControl>
         </div>
 
-        {/* Tạm tính */}
+
         <div>
           <div style={{ fontSize: 13, color: token.colorTextSecondary }}>Tạm tính</div>
           <TotalPrice>
@@ -93,7 +93,7 @@ const PurchaseBox = ({
 
         <Divider style={{ margin: '14px 0 16px' }} />
 
-        {/* Nút mua ngay — Payload: { productId, quantity, price } */}
+
         <ButtonComponent
           onClick={() => onBuyNow({ productId, quantity, price })}
           textButton="Mua ngay"
@@ -109,7 +109,7 @@ const PurchaseBox = ({
           styleTextButton={{ color: '#fff', fontSize: 15, fontWeight: 600 }}
         />
 
-        {/* Nút thêm vào giỏ — Payload: { productId, quantity, price } */}
+
         <ButtonComponent
           onClick={() => onAddToCart({ productId, quantity, price })}
           textButton="Thêm vào giỏ"

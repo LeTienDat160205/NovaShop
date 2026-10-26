@@ -11,9 +11,11 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 
 from recommendation_engine import (
+    build_tfidf_vectors,
     rank_content_profile_products,
     rank_personalized_products,
     rank_products,
+    rank_similar_products,
 )
 
 
@@ -29,10 +31,18 @@ CATALOG_PROJECTION = {
     "images": 1,
     "brand": 1,
     "categoryPath": 1,
+    "group": 1,
+    "specifications": 1,
+    "description": 1,
     "createdAt": 1,
 }
 catalog_cache_lock = threading.Lock()
-catalog_cache = {"loaded_at": 0, "products": [], "rating_summaries": {}}
+catalog_cache = {
+    "loaded_at": 0,
+    "products": [],
+    "rating_summaries": {},
+    "content_vectors": {},
+}
 
 
 def get_mongodb_uri():
@@ -120,11 +130,13 @@ def get_catalog_snapshot():
             )
             catalog_cache["products"] = products
             catalog_cache["rating_summaries"] = rating_summaries
+            catalog_cache["content_vectors"] = build_tfidf_vectors(products)
             catalog_cache["loaded_at"] = now
 
         return (
             [dict(product) for product in catalog_cache["products"]],
             catalog_cache["rating_summaries"],
+            catalog_cache["content_vectors"],
         )
 
 
@@ -142,6 +154,7 @@ def get_personalized_recommendations(
     profile_products,
     limit,
     offset=0,
+    content_vectors=None,
 ):
     user_object_id = ObjectId(user_id)
     interactions = database["interactions"]
@@ -160,6 +173,16 @@ def get_personalized_recommendations(
     if not seed_product_ids:
         return None
 
+    content_recommendations = rank_content_profile_products(
+        products,
+        profile_products,
+        user_events,
+        limit=offset + limit,
+        content_vectors=content_vectors,
+    )
+    if content_recommendations:
+        return content_recommendations[offset:]
+
     interaction_cutoff = datetime.now(timezone.utc) - timedelta(days=365)
     peer_seed_events = list(interactions.find(
         {
@@ -175,14 +198,6 @@ def get_personalized_recommendations(
         if event.get("userId")
     })
     if not peer_ids:
-        content_recommendations = rank_content_profile_products(
-            products,
-            profile_products,
-            user_events,
-            limit=offset + limit,
-        )
-        if content_recommendations:
-            return content_recommendations[offset:]
         return None
 
     peer_candidate_events = list(interactions.find(
@@ -203,14 +218,6 @@ def get_personalized_recommendations(
     )
     if personalized:
         return personalized[offset:]
-    content_recommendations = rank_content_profile_products(
-        products,
-        profile_products,
-        user_events,
-        limit=offset + limit,
-    )
-    if content_recommendations:
-        return content_recommendations[offset:]
     return None
 
 
@@ -234,13 +241,25 @@ class RecommendationHandler(BaseHTTPRequestHandler):
                 self._send_json(503, {"status": "ERR", "message": "Database unavailable"})
             return
 
-        if parsed_url.path != "/recommendations/default":
+        is_similar_request = parsed_url.path == "/recommendations/similar"
+        if parsed_url.path != "/recommendations/default" and not is_similar_request:
             self._send_json(404, {"status": "ERR", "message": "Không tìm thấy endpoint"})
             return
 
         params = parse_qs(parsed_url.query)
+        product_id = params.get("productId", [None])[0]
+        if is_similar_request and (
+            not product_id or not ObjectId.is_valid(product_id)
+        ):
+            self._send_json(
+                400,
+                {"status": "ERR", "message": "ID sản phẩm không hợp lệ"},
+            )
+            return
+
         try:
-            limit = int(params.get("limit", ["12"])[0])
+            default_limit = "8" if is_similar_request else "12"
+            limit = int(params.get("limit", [default_limit])[0])
         except ValueError:
             self._send_json(
                 400,
@@ -300,8 +319,34 @@ class RecommendationHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            profile_products, rating_summaries = get_catalog_snapshot()
+            profile_products, rating_summaries, content_vectors = get_catalog_snapshot()
             products = profile_products
+            if is_similar_request:
+                if not any(str(product["_id"]) == product_id for product in products):
+                    self._send_json(
+                        404,
+                        {"status": "ERR", "message": "Không tìm thấy sản phẩm"},
+                    )
+                    return
+                rated_products = rank_products(
+                    [dict(product) for product in profile_products],
+                    rating_summaries,
+                    limit=len(profile_products),
+                )
+                recommendations = rank_similar_products(
+                    rated_products,
+                    product_id,
+                    limit=limit,
+                    content_vectors=content_vectors,
+                )
+                self._send_json(200, {
+                    "status": "OK",
+                    "mode": "content-based",
+                    "message": "Lấy sản phẩm tương tự thành công",
+                    "data": [serialize_product(product) for product in recommendations],
+                })
+                return
+
             if exclude_product_id:
                 excluded_id = str(exclude_product_id)
                 products = [
@@ -339,6 +384,7 @@ class RecommendationHandler(BaseHTTPRequestHandler):
                     profile_products,
                     limit,
                     offset,
+                    content_vectors,
                 )
                 if personalized is not None:
                     recommendations = personalized

@@ -38,7 +38,7 @@ const SignUpPage = () => {
   }
 
   const handleNavigateSignIn = () => {
-    navigate('/sign-in') // Thay đường dẫn '/sign-in' theo đúng route trong App.js của bạn
+    navigate('/sign-in')
   }
 
   return (
@@ -54,12 +54,12 @@ const SignUpPage = () => {
         <InputForm style={{marginBottom: '10px'}} placeholder="Nhập mật khẩu" type="password" name="password" autoComplete="new-password" value={form.password} onChange={handleChange} minLength={8} required />
         <InputForm placeholder="Xác nhận mật khẩu" type="password" name="confirmPassword" autoComplete="new-password" value={form.confirmPassword} onChange={handleChange} required />
         {error && <Alert message={error} type="error" showIcon style={{ marginTop: 12 }} />}
-        <ButtonComponent 
+        <ButtonComponent
             bordered={false}
             size={40}
           htmlType="submit"
           loading={isSubmitting}
-            styleButton={{ 
+            styleButton={{
                 backgroundColor: 'rgb(255, 57, 69)',
                 height: '48px',
                 width: '100%',
@@ -72,11 +72,11 @@ const SignUpPage = () => {
         ></ButtonComponent>
         </form>
 
-        {/* Cập nhật sự kiện chuyển trang */}
+
         <p>
           Bạn đã có tài khoản?{' '}
-          <WrapperTextLight 
-            onClick={handleNavigateSignIn} 
+          <WrapperTextLight
+            onClick={handleNavigateSignIn}
             style={{ cursor: 'pointer' }}
           >
             Đăng nhập

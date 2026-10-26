@@ -6,7 +6,7 @@ const ScrollToTop = () => {
 
   useEffect(() => {
     window.history.scrollRestoration = "manual";
-    
+
     window.scrollTo({
       top: 0,
       left: 0,

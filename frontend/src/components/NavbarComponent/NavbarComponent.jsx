@@ -10,9 +10,9 @@ const NavbarComponent = ({
   filters = {},
   onFilterChange = () => {},
   onResetFilters = () => {},
-  brands = [], //  Nhận danh sách hãng truyền động từ TypeProductPage
+  brands = [],
 }) => {
-  // Các mốc khoảng giá
+
   const priceOptions = [
     { label: "Dưới 100.000 đ", min: 0, max: 100000 },
     { label: "100.000 đ - 500.000 đ", min: 100000, max: 500000 },
@@ -22,7 +22,7 @@ const NavbarComponent = ({
 
   const renderContent = (type, options) => {
     switch (type) {
-      // 1. Ô tìm kiếm theo tên
+
       case "search":
         return (
           <Input.Search
@@ -34,7 +34,7 @@ const NavbarComponent = ({
           />
         );
 
-      // 2. Danh sách checkbox theo thương hiệu (Lấy động từ props brands)
+
       case "checkbox":
         if (!options || options.length === 0) {
           return <span style={{ color: "#888", fontSize: "13px" }}>Không có hãng nào</span>;
@@ -51,7 +51,7 @@ const NavbarComponent = ({
               }}
               value={filters.brand ? [filters.brand] : []}
               onChange={(checkedValues) => {
-                // Chọn một hãng hoặc bỏ chọn nếu tick lại
+
                 const selected = checkedValues[checkedValues.length - 1] || "";
                 onFilterChange("brand", selected);
               }}
@@ -69,7 +69,7 @@ const NavbarComponent = ({
           </div>
         );
 
-      // 3. Đánh giá (Rating)
+
       case "star":
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -110,7 +110,7 @@ const NavbarComponent = ({
           </div>
         );
 
-      // 4. Mức giá
+
       case "price":
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -153,11 +153,11 @@ const NavbarComponent = ({
 
   return (
     <div style={{ background: "#fff", padding: "12px", borderRadius: "6px" }}>
-      {/* 1. Lọc tên */}
+
       <WrapperLabelStyle>Tên sản phẩm</WrapperLabelStyle>
       <WrapperContent>{renderContent("search")}</WrapperContent>
 
-      {/* 2. Lọc theo hãng (Tự sinh danh sách từ mảng brands truyền vào) */}
+
       <WrapperLabelStyle style={{ marginTop: "16px" }}>
         Thương hiệu
       </WrapperLabelStyle>
@@ -168,19 +168,19 @@ const NavbarComponent = ({
         )}
       </WrapperContent>
 
-      {/* 3. Lọc theo đánh giá */}
+
       <WrapperLabelStyle style={{ marginTop: "16px" }}>
         Đánh giá
       </WrapperLabelStyle>
       <WrapperContent>{renderContent("star", [5, 4, 3])}</WrapperContent>
 
-      {/* 4. Lọc theo giá */}
+
       <WrapperLabelStyle style={{ marginTop: "16px" }}>
         Khoảng giá
       </WrapperLabelStyle>
       <WrapperContent>{renderContent("price", priceOptions)}</WrapperContent>
 
-      {/* Nút reset */}
+
       <Button
         type="dashed"
         danger
