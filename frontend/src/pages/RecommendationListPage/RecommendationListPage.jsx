@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button, Empty, Spin } from 'antd';
 import CardComponent from '../../components/CardComponent/CardComponent';
+import BannerGallery from '../../components/BannerGallery/BannerGallery';
 import * as ProductService from '../../services/ProductService';
+import recommend1 from '../../assets/images/recommend1.png';
+import recommend2 from '../../assets/images/recommend2.png';
+import recommend3 from '../../assets/images/recommend3.png';
+import recommend4 from '../../assets/images/recommend4.png';
+import deal1 from '../../assets/images/deal1.png';
+import deal2 from '../../assets/images/deal2.png';
+import deal3 from '../../assets/images/deal3.png';
+import deal4 from '../../assets/images/deal4.png';
 
 const Page = styled.main`
   min-height: 100vh;
@@ -50,8 +59,8 @@ const PageTitle = styled.h1`
 
 const ProductGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 20px;
 
   @media (max-width: 1100px) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -59,7 +68,7 @@ const ProductGrid = styled.div`
 
   @media (max-width: 800px) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
+    gap: 16px;
   }
 
   @media (max-width: 560px) {
@@ -71,18 +80,25 @@ const PAGE_SIZE = 24;
 
 const RecommendationListPage = () => {
   const { type } = useParams();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isDeals = type === 'deals';
-  const isValidType = isDeals || type === 'recommended';
+  const isValidType = isDeals || !type || type === 'recommended';
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadError, setLoadError] = useState('');
-  const excludeProductId = searchParams.get('excludeProductId') || undefined;
-  const excludeProductIdsKey = searchParams.get('excludeProductIds') || '';
+  const excludeProductId = searchParams.get('excludeProductId')
+    || location.state?.excludeProductId
+    || undefined;
+  const stateExcludedProductIds = Array.isArray(location.state?.excludeProductIds)
+    ? location.state.excludeProductIds
+    : [];
+  const excludeProductIdsKey = searchParams.get('excludeProductIds')
+    || stateExcludedProductIds.join(',');
 
   useEffect(() => {
     let active = true;
@@ -174,6 +190,13 @@ const RecommendationListPage = () => {
           </PageTitle>
           <Button onClick={() => navigate('/')}>Về trang chủ</Button>
         </PageHeader>
+
+        <BannerGallery
+          images={isDeals
+            ? [deal1, deal2, deal3, deal4]
+            : [recommend1, recommend2, recommend3, recommend4]}
+          label={isDeals ? 'Banner ưu đãi' : 'Banner đề xuất'}
+        />
 
         {loading ? (
           <div style={{ padding: 48, textAlign: 'center' }}><Spin size="large" /></div>

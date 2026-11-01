@@ -801,8 +801,8 @@ export const PlaceholderBox = styled.div`
 
 export const HorizontalScrollRow = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
 
   @media (max-width: ${token.breakpoint.desktop}) {
     grid-template-columns: repeat(4, 1fr);
@@ -810,14 +810,14 @@ export const HorizontalScrollRow = styled.div`
 
   @media (max-width: ${token.breakpoint.tablet}) {
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: 16px;
   }
 `;
 
 export const ExploreGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
 
   @media (max-width: ${token.breakpoint.desktop}) {
     grid-template-columns: repeat(4, 1fr);
@@ -825,7 +825,7 @@ export const ExploreGrid = styled.div`
 
   @media (max-width: ${token.breakpoint.tablet}) {
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: 16px;
   }
 `;
 

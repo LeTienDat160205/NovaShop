@@ -4,10 +4,11 @@ import {
   WrapperButtonMore,
   WrapperProducts,
 } from "./style";
-import SliderComponent from "../../components/SliderComponent/SliderComponent";
-import slider1 from "../../assets/images/slider1.webp";
-import slider2 from "../../assets/images/slider2.webp";
-import slider3 from "../../assets/images/slider3.webp";
+import BannerGallery from "../../components/BannerGallery/BannerGallery";
+import home1 from "../../assets/images/home1.png";
+import home2 from "../../assets/images/home2.png";
+import home3 from "../../assets/images/home3.png";
+import home4 from "../../assets/images/home4.png";
 import CardComponent from "../../components/CardComponent/CardComponent";
 import RecommendedProducts from "../../components/RecommendedProducts/RecommendedProducts";
 import TopDeals from "../../components/ProductDetailsComponent/sub-components/TopDeals";
@@ -134,6 +135,7 @@ const HomePage = () => {
           {CATEGORY_LIST.map((item) => (
             <TypeProduct
               name={item.name}
+              slug={item.slug}
               key={item.slug}
               onClick={() => openCategory(item.slug)}
             />
@@ -153,7 +155,11 @@ const HomePage = () => {
         }}
       >
 
-        <SliderComponent arrImages={[slider1, slider2, slider3]} />
+        <BannerGallery
+          images={[home1, home2, home3, home4]}
+          label="Banner trang chủ"
+          flushTop
+        />
 
         <TopDeals
           showEmpty
@@ -162,7 +168,7 @@ const HomePage = () => {
         />
 
         <RecommendedProducts
-          limit={12}
+          limit={24}
           excludeProductIds={dealProductIds}
           onProductsChange={handleRecommendedProductIdsChange}
           showViewAll

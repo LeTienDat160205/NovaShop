@@ -3,7 +3,8 @@ import styled from "styled-components";
 export const WrapperTypeProduct = styled.div`
   display: inline-flex;
   align-items: center;
-  padding: 10px 18px;
+  gap: 7px;
+  padding: 8px 18px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
   font-weight: 400;
@@ -13,6 +14,11 @@ export const WrapperTypeProduct = styled.div`
   user-select: none;
   position: relative;
   transition: color 0.2s ease;
+
+  svg {
+    color: #0b74e5;
+    font-size: 15px;
+  }
 
   /* Bỏ padding trái cho item đầu tiên để thẳng hàng với lề bên dưới */
   &:first-child {

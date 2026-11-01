@@ -39,7 +39,7 @@ export const WrapperButtonMore = styled(ButtonComponent)`
 
 export const WrapperProducts = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 20px;
   margin-top: 24px;
 
@@ -53,6 +53,6 @@ export const WrapperProducts = styled.div`
 
   @media (max-width: 560px) {
     grid-template-columns: repeat(2, minmax(140px, 1fr));
-    gap: 12px;
+    gap: 16px;
   }
 `;

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { ExploreGrid } from '../ProductDetailsComponent/style';
-import CardComponent from '../CardComponent/CardComponent';
+import ProductCarousel from '../ProductCarousel/ProductCarousel';
 import * as ProductService from '../../services/ProductService';
 import { getAuthSession } from '../../utils/authSession';
 
@@ -75,7 +74,7 @@ const ViewAllButton = styled.button`
 `;
 
 const RecommendedProducts = ({
-  limit = 12,
+  limit = 24,
   excludeProductId,
   excludeProductIds = [],
   onProductsChange,
@@ -142,12 +141,9 @@ const RecommendedProducts = ({
           {showViewAll && (
             <ViewAllButton
               type="button"
-              onClick={() => {
-                const params = new URLSearchParams();
-                if (excludedIdsKey) params.set('excludeProductIds', excludedIdsKey);
-                if (excludeProductId) params.set('excludeProductId', excludeProductId);
-                navigate(`/recommendations/recommended?${params.toString()}`);
-              }}
+              onClick={() => navigate('/recommendations', {
+                state: { excludeProductId, excludeProductIds },
+              })}
             >
               Xem tất cả
             </ViewAllButton>
@@ -157,11 +153,7 @@ const RecommendedProducts = ({
       {isLoading ? (
         <div style={{ padding: '20px 0' }}>Đang tải gợi ý sản phẩm...</div>
       ) : products.length ? (
-        <ExploreGrid>
-          {products.map(product => (
-            <CardComponent key={product._id} product={product} />
-          ))}
-        </ExploreGrid>
+        <ProductCarousel products={products} label="Sản phẩm đề xuất" />
       ) : (
         <div style={{ padding: '20px 0', color: '#666', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Chưa có sản phẩm phù hợp để gợi ý.          </span>

@@ -178,7 +178,7 @@ const ProductDetailsComponent = ({
 
         <TopDeals currentProductId={product?._id} />
         <RecentlyViewed currentProductId={product?._id}/>
-        <RecommendedProducts limit={8} excludeProductId={product?._id} />
+        <RecommendedProducts limit={24} excludeProductId={product?._id} />
       </ContentWrapper>
 
 

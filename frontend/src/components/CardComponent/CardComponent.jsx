@@ -38,7 +38,7 @@ const CardComponent = ({ product, onClick }) => {
       onClick={handleOpenProduct}
       variant="borderless"
       style={{ width: "100%", cursor: "pointer" }}
-      bodyStyle={{ padding: "10px" }}
+      bodyStyle={{ padding: "14px" }}
       cover={
         <img
           draggable={false}
@@ -65,18 +65,18 @@ const CardComponent = ({ product, onClick }) => {
 
       <WrapperReportText>
         {Number(product?.rating) > 0 && (
-          <span style={{ marginRight: "4px" }}>
+          <span className="rating">
             <span>{Number(product.rating).toFixed(1)}</span>
             <StarFilled style={{ fontSize: "12px", color: "orange" }} />
           </span>
         )}
         {product?.reviewCount > 0 && (
-          <span style={{ marginRight: "4px" }}>
+          <span className="review-count">
             ({Number(product.reviewCount).toLocaleString("vi-VN")} đánh giá)
           </span>
         )}
-        <WrapperStyleTextSell>
-          | Đã bán {product?.selled || product?.sold || 0}
+        <WrapperStyleTextSell className="sold-count">
+          Đã bán {product?.selled || product?.sold || 0}
         </WrapperStyleTextSell>
       </WrapperReportText>
 

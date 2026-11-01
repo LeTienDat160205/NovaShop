@@ -12,19 +12,41 @@ export const WrapperCardStyle = styled(Card)`
 `
 
 export const StyleNameProduct = styled.div`
-    font-weight: 400;
     font-size: 12px;
     line-height: 16px;
     color: rgb(56, 56, 61);
     font-weight: bold;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    min-height: 32px;
 `
 
 export const WrapperReportText = styled.div`
-    font-size: 11px;
+    min-width: 0;
+    font-size: 10px;
     color: rgb(128, 128, 137);
     display: flex;
     align-items: center;
-    margin: 6px 0 0px;
+    gap: 5px;
+    margin: 6px 0 0;
+    line-height: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+
+    .rating {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        flex: 0 0 auto;
+    }
+
+    .review-count {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 `
 
 export const WrapperPriceText = styled.div`
@@ -45,7 +67,8 @@ export const WrapperDiscountText = styled.span`
     font-weight: 500;
 `
 export  const WrapperStyleTextSell = styled.span`
-    font-size: 15px;
-    line-height: 24px;
+    flex: 0 0 auto;
+    font-size: 10px;
+    line-height: 16px;
     color: rgb(120, 120, 120);
 `

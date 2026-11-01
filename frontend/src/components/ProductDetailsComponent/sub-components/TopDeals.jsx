@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import CardComponent from '../../CardComponent/CardComponent';
+import ProductCarousel from '../../ProductCarousel/ProductCarousel';
 import * as ProductService from '../../../services/ProductService';
 
-const PRODUCT_LIMIT = 6;
+const PRODUCT_LIMIT = 24;
 
 const DealSection = styled.section`
   margin: 24px 0;
@@ -65,25 +65,6 @@ const ViewAllButton = styled.button`
   &:hover {
     color: #075cb8;
     text-decoration: underline;
-  }
-`;
-
-const DealGrid = styled.div`
-  display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-
-  @media (max-width: 1100px) {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  @media (max-width: 800px) {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  @media (max-width: 560px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
   }
 `;
 
@@ -171,11 +152,7 @@ const TopDeals = ({
         </DealHeaderActions>
       </DealHeader>
       {products.length ? (
-        <DealGrid>
-          {products.map(product => (
-            <CardComponent key={product._id} product={product} />
-          ))}
-        </DealGrid>
+        <ProductCarousel products={products} label="Sản phẩm ưu đãi" />
       ) : (
         <div style={{ padding: 20, textAlign: 'center', color: '#808089' }}>
           Hiện chưa có sản phẩm giảm giá.

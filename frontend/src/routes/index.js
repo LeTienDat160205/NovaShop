@@ -40,6 +40,11 @@ export const routes = [
         isShowHeader: true,
     },
     {
+        path: '/recommendations',
+        page: RecommendationListPage,
+        isShowHeader: true,
+    },
+    {
         path: '/recommendations/:type',
         page: RecommendationListPage,
         isShowHeader: true,
