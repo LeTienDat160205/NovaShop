@@ -74,14 +74,12 @@ const NotFoundLayout = () => (
 const VIEWED_PRODUCTS_KEY = 'novashop_viewed_products';
 const MAX_VIEWED_PRODUCTS = 12;
 
-
 const ProductDetailsComponent = ({
   product,
   isLoading = false,
   onAddToCart = () => {},
   onBuyNow = () => {},
 }) => {
-
     useEffect(() => {
     if (!product?._id) return;
 
@@ -108,7 +106,6 @@ const ProductDetailsComponent = ({
       );
     }
   }, [product?._id]);
-
 
   if (isLoading) return <SkeletonLayout />;
 
@@ -174,7 +171,6 @@ const ProductDetailsComponent = ({
             reviewCount={product.reviewCount}
           />
         </div>
-
 
         <TopDeals currentProductId={product?._id} />
         <RecentlyViewed currentProductId={product?._id}/>

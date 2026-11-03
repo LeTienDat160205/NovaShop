@@ -1,7 +1,6 @@
-import React, { Fragment } from 'react'
+import { Fragment } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { routes } from './routes'
-import HeaderCompoment from './components/HeaderComponent/HeaderComponent'
 import DefaultCompoment from './components/DefaultComponent/DefaultComponent'
 import ScrollToTop from './components/ScrollToTop/ScrollToTop';
 import AdminRoute from './components/AdminRoute/AdminRoute';

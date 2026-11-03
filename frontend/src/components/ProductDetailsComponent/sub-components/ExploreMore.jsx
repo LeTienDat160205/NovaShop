@@ -41,7 +41,7 @@ const ExploreMore = ({ currentProductId }) => {
           (product) => product._id !== currentProductId
         );
         const resultProducts = activeTab === RECOMMENDATIONS_TAB
-          ? allProducts.slice(0, PRODUCT_LIMIT)
+          ? filteredProducts.slice(0, PRODUCT_LIMIT)
           : [...filteredProducts]
             .sort(
               (a, b) =>

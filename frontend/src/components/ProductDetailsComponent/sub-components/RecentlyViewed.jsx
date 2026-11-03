@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   SectionCard,
   CardTitle,
@@ -26,7 +26,6 @@ const RecentlyViewed = ({ currentProductId }) => {
           return;
         }
 
-
         const response = await ProductService.getAllProduct();
 
         if (response?.status !== 'OK') {
@@ -35,7 +34,6 @@ const RecentlyViewed = ({ currentProductId }) => {
         }
 
         const allProducts = response.data || [];
-
 
         const viewedProducts = viewedIds
           .filter((id) => id !== currentProductId)
