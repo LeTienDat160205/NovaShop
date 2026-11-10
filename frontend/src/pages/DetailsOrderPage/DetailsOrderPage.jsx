@@ -19,7 +19,7 @@ const statusLabel = {
 };
 const paymentLabel = {
   COD: "Thanh toán khi nhận hàng",
-  MOMO: "Ví MoMo",
+  ZALOPAY: "ZaloPay",
 };
 const paymentStatusLabel = {
   NotRequired: "Thanh toán khi nhận hàng",

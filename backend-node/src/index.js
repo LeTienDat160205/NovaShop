@@ -22,7 +22,9 @@ const port = process.env.PORT || 3001;
 const adminUserRoutes = require('./routes/AdminUserRouter');
 
 app.use(cors());
-app.use(express.json());
+// Avatar uploads are sent as validated data URLs before being stored on Cloudinary.
+// Keep the limit bounded while allowing images up to the documented 5MB limit.
+app.use(express.json({ limit: '8mb' }));
 
 mongoose
   .connect(

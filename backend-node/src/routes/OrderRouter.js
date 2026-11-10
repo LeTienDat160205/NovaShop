@@ -3,7 +3,7 @@ const authMiddleware = require('../middleware/authMiddleware');
 const OrderController = require('../controllers/OrderController');
 
 const router = express.Router();
-router.post('/momo/ipn', OrderController.handleMomoIpn);
+router.post('/zalopay/callback', OrderController.handleZaloPayCallback);
 router.use(authMiddleware.requireCustomer);
 router.post('/', OrderController.createOrder);
 router.get('/mine', OrderController.getMyOrders);

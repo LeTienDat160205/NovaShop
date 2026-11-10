@@ -15,7 +15,7 @@ const request = async (path, options = {}) => {
   const result = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 401) clearAuthSession();
-    const error = new Error(result.message || `Lỗi HTTP ${response.status}`);
+    const error = new Error(result.detail || result.message || `Lỗi HTTP ${response.status}`);
     error.status = response.status;
     throw error;
   }

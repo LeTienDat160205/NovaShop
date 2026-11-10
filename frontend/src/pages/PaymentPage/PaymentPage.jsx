@@ -136,11 +136,11 @@ const PaymentPage = () => {
                 shippingName: shippingInfo.name,
                 shippingPhone: shippingInfo.phone,
                 shippingAddress: shippingInfo.address,
-                paymentMethod: payment === "cod" ? "COD" : "MOMO",
+                paymentMethod: payment === "cod" ? "COD" : "ZALOPAY",
             });
-            if (payment === "momo") {
+            if (payment === "zalopay") {
                 if (!result.data?.payUrl) {
-                    throw new Error("Không nhận được liên kết thanh toán MoMo.");
+                    throw new Error("Không nhận được liên kết thanh toán ZaloPay.");
                 }
                 window.location.assign(result.data.payUrl);
                 return;
@@ -231,7 +231,7 @@ const PaymentPage = () => {
                                         <Radio value="cod">Thanh toán khi nhận hàng (COD)</Radio>
                                     </div>
                                     <div style={{ padding: "16px 0 4px" }}>
-                                        <Radio value="momo">Ví MoMo</Radio>
+                                        <Radio value="zalopay">ZaloPay</Radio>
                                     </div>
                                 </Radio.Group>
                             </section>

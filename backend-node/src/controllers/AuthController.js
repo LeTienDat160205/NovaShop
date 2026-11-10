@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/UserModel');
 const { sendPasswordResetEmail } = require('../utils/emailService');
+const { uploadAvatar } = require('../utils/cloudinary');
 
 const publicUser = (user) => ({
 	id: user._id,
@@ -13,6 +14,7 @@ const publicUser = (user) => ({
 	address: user.address || '',
 	gender: user.gender || '',
 	dob: user.dob ? (user.dob instanceof Date ? user.dob.toISOString() : user.dob) : null,
+	avatar: user.avatar || '',
 });
 
 const createToken = (user) => jwt.sign(
@@ -261,4 +263,25 @@ const updateProfile = async (req, res) => {
 	}
 };
 
-module.exports = { register, login, requestPasswordReset, resetPassword, updateProfile };
+const updateAvatar = async (req, res) => {
+	try {
+		const dataUrl = req.body?.avatar;
+		if (typeof dataUrl !== 'string' || !/^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(dataUrl)) {
+			return res.status(400).json({ message: 'Ảnh đại diện không hợp lệ.' });
+		}
+		const base64 = dataUrl.split(',')[1];
+		if (Buffer.byteLength(base64, 'base64') > 5 * 1024 * 1024) {
+			return res.status(400).json({ message: 'Ảnh đại diện không được vượt quá 5MB.' });
+		}
+		const user = await User.findById(req.user.id);
+		if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng.' });
+		user.avatar = await uploadAvatar(dataUrl, user._id.toString());
+		await user.save();
+		return res.status(200).json({ message: 'Cập nhật ảnh đại diện thành công.', user: publicUser(user) });
+	} catch (error) {
+		console.error('Update avatar error:', error);
+		return res.status(502).json({ message: 'Không thể lưu ảnh đại diện. Kiểm tra cấu hình Cloudinary.' });
+	}
+};
+
+module.exports = { register, login, requestPasswordReset, resetPassword, updateProfile, updateAvatar };

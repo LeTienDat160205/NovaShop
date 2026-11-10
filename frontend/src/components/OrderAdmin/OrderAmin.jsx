@@ -82,8 +82,8 @@ const OrderAdmin = () => {
       dataIndex: 'paymentMethod',
       render: (value, order) => (
         <Space direction="vertical" size={2}>
-          <span>{value === 'COD' ? 'Thanh toán khi nhận hàng' : value === 'MOMO' ? 'Ví MoMo' : value || '—'}</span>
-          {value === 'MOMO' && (
+          <span>{value === 'COD' ? 'Thanh toán khi nhận hàng' : value === 'ZALOPAY' ? 'ZaloPay' : value || '—'}</span>
+          {value === 'ZALOPAY' && (
             <Tag color={order.paymentStatus === 'Paid' ? 'green' : order.paymentStatus === 'Failed' ? 'red' : 'orange'}>
               {order.paymentStatus === 'Paid' ? 'Đã thanh toán' : order.paymentStatus === 'Failed' ? 'Thất bại' : 'Đang chờ'}
             </Tag>

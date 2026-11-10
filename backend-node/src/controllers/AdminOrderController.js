@@ -29,7 +29,7 @@ const updateOrderStatus = async (req, res) => {
         if (!existingOrder) return res.status(404).json({ message: 'Không tìm thấy đơn hàng.' });
         if (
             ['Processing', 'Delivered'].includes(status)
-            && existingOrder.paymentMethod === 'MOMO'
+            && existingOrder.paymentMethod === 'ZALOPAY'
             && existingOrder.paymentStatus !== 'Paid'
         ) {
             return res.status(409).json({ message: 'Chỉ có thể xử lý đơn MoMo sau khi thanh toán thành công.' });

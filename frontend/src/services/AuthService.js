@@ -31,3 +31,13 @@ export const updateProfileUser = async (data, token) => {
 
   return response.data;
 };
+
+export const updateAvatarUser = async (avatar, token) => {
+  const response = await axios.put(`${API_URL}/avatar`, { avatar }, { headers: { Authorization: `Bearer ${token}` } });
+  return response.data;
+};
+
+export const getCurrentUser = async (token) => {
+  const response = await axios.get(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}` } });
+  return response.data;
+};

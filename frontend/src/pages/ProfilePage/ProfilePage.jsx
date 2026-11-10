@@ -17,7 +17,7 @@ import {
   DatePicker,
   message,
 } from "antd";
-import { updateProfileUser } from "../../services/AuthService";
+import { updateProfileUser, updateAvatarUser } from "../../services/AuthService";
 import { clearAuthSession, getAuthSession } from "../../utils/authSession";
 
 import {
@@ -37,11 +37,12 @@ const { Title, Text } = Typography;
 const ProfilePage = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [avatar, setAvatar] = useState(null);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [phoneValue, setPhoneValue] = useState("");
   const [isSavingPhone, setIsSavingPhone] = useState(false);
   const currentUser = getAuthSession().user;
+  const [avatar, setAvatar] = useState(currentUser?.avatar || null);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [profileUserId] = useState(() => String(currentUser?.id || currentUser?._id || ""));
 
   const isProfileSessionValid = () => {
@@ -91,6 +92,19 @@ const ProfilePage = () => {
     }
 
     return false;
+  };
+
+  const handleAvatarSave = async () => {
+    if (!avatar || avatar === currentUser?.avatar || !isProfileSessionValid()) return;
+    setIsSavingAvatar(true);
+    try {
+      const response = await updateAvatarUser(avatar, getAuthSession().token);
+      localStorage.setItem("novashop_user", JSON.stringify(response.user));
+      setAvatar(response.user.avatar);
+      window.dispatchEvent(new Event("novashop-auth-changed"));
+      message.success("Cập nhật ảnh đại diện thành công");
+    } catch (error) { message.error(error.response?.data?.message || "Không thể lưu ảnh đại diện."); }
+    finally { setIsSavingAvatar(false); }
   };
 
   const handleSave = async (values) => {
@@ -247,12 +261,12 @@ const ProfilePage = () => {
                       showUploadList={false}
                       accept="image/*"
                       beforeUpload={(file) => {
-                        if (!file.type.startsWith("image/")) {
+                        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
                           message.error("Vui lòng chọn file ảnh");
                           return Upload.LIST_IGNORE;
                         }
-                        if (file.size > 2 * 1024 * 1024) {
-                          message.error("Ảnh phải nhỏ hơn 2MB");
+                        if (file.size > 5 * 1024 * 1024) {
+                          message.error("Ảnh phải nhỏ hơn 5MB");
                           return Upload.LIST_IGNORE;
                         }
                         handleAvatarChange({ file });
@@ -270,6 +284,7 @@ const ProfilePage = () => {
                         }}
                       />
                     </Upload>
+                    <Button size="small" loading={isSavingAvatar} disabled={!avatar || avatar === currentUser?.avatar} onClick={handleAvatarSave} style={{ marginTop: 8 }}>Lưu ảnh</Button>
                   </div>
                 </Col>
 

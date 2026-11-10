@@ -128,6 +128,7 @@ const HeaderComponent = () => {
             <WrapperHeaderAccount style={{ position: "relative" }}>
               <Avatar
                 size={30}
+                src={user.avatar || undefined}
                 icon={<UserOutlined />}
                 style={{ backgroundColor: "#fff", color: "#1a94ff" }}
               />
