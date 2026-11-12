@@ -1,472 +1,158 @@
 # NovaShop
 
-NovaShop là website thương mại điện tử được xây dựng bằng React và Node.js, hỗ trợ duyệt sản phẩm, tìm kiếm, quản lý giỏ hàng, đặt hàng COD hoặc thanh toán MoMo, khôi phục mật khẩu qua email, theo dõi đơn hàng và khu vực quản trị cửa hàng.
+NovaShop là website thương mại điện tử gồm giao diện React, REST API Node.js/Express, cơ sở dữ liệu MongoDB và một dịch vụ Python riêng để xếp hạng sản phẩm gợi ý.
 
-## Công nghệ sử dụng
+## Công nghệ
 
-- React 19
-- Vite
-- React Router DOM
-- Ant Design
-- Redux Toolkit
-- React Redux
-- Styled Components
-- React Slick và Slick Carousel
-- JavaScript ES Modules
-- Node.js và Express
-- MongoDB và Mongoose
-- Nodemailer cho email SMTP
+- Frontend: React 19, Vite, React Router, Ant Design, Redux Toolkit và Styled Components.
+- Backend: Node.js, Express, Mongoose, JWT, bcrypt và Nodemailer.
+- Dữ liệu: MongoDB.
+- Recommendation Engine: Python, PyMongo, TF-IDF/cosine và các thuật toán xếp hạng được triển khai trong mã nguồn.
 
-## Chạy dự án
+## Chức năng hiện tại
 
-### Cài đặt dependencies
+- Duyệt và tìm sản phẩm theo tên, thương hiệu, danh mục; lọc theo thương hiệu, đánh giá và khoảng giá.
+- Xem thông tin chi tiết, đánh giá và sản phẩm tương tự.
+- Đăng ký, đăng nhập, cập nhật hồ sơ, ảnh đại diện và đặt lại mật khẩu qua email.
+- Quản lý giỏ hàng, sản phẩm yêu thích, đặt hàng và theo dõi/hủy đơn hàng theo trạng thái.
+- Thanh toán COD hoặc ZaloPay. ZaloPay cần cấu hình thông tin môi trường; nếu chưa cấu hình, lựa chọn này không thể khởi tạo giao dịch.
+- Khu vực quản trị để quản lý sản phẩm, đơn hàng, đánh giá, người dùng và xem tổng quan số lượng sản phẩm/khách hàng/đơn hàng, trạng thái đơn cùng một số đơn gần đây.
+- Gợi ý mặc định dựa trên xếp hạng Bayesian từ điểm đánh giá; gợi ý cá nhân hóa dựa trên lịch sử tương tác khi có dữ liệu phù hợp; tìm sản phẩm tương tự bằng TF-IDF và cosine similarity.
 
-```bash
-cd frontend
-npm install
+Hệ thống ghi nhận các tương tác của khách hàng đã đăng nhập gồm xem sản phẩm, yêu thích, thêm vào giỏ hàng và mua hàng. Gợi ý cá nhân hóa khai thác các tương tác này. Khách chưa có đủ lịch sử nhận danh sách gợi ý mặc định.
+
+Các chức năng chưa có trong phiên bản hiện tại gồm thanh toán MoMo/VNPay/thẻ/QR, mã giảm giá, lọc theo thông số kỹ thuật, khóa tài khoản, thống kê doanh thu/sản phẩm bán chạy, cấu hình trọng số gợi ý từ Admin, nhật ký hệ thống, widget gợi ý tại giỏ hàng/hồ sơ và “thường được mua cùng nhau”.
+
+## Yêu cầu
+
+- Node.js và npm.
+- Python 3.
+- MongoDB Atlas hoặc MongoDB tương thích.
+- Kết nối đến MongoDB từ cả backend và Recommendation Engine.
+
+## Chạy dự án trên Windows
+
+Chạy mỗi dịch vụ trong một cửa sổ PowerShell riêng tại thư mục gốc repository.
+
+### 1. Cấu hình backend
+
+Tạo `backend-node/.env` dựa trên [`backend-node/.env.example`](./backend-node/.env.example). Điền tối thiểu:
+
+```dotenv
+PORT=3001
+MONGO_DB=<mat-khau-mongodb>
+JWT_SECRET=<chuoi-bi-mat-ngau-nhien>
+FRONTEND_URL=http://localhost:5173
 ```
 
-### Chạy môi trường phát triển
+Backend hiện tạo MongoDB URI Atlas từ `MONGO_DB`. Không commit file `.env` hoặc thông tin bí mật.
 
-```bash
-npm run dev
-```
+Cài đặt và khởi động:
 
-### Build production
-
-```bash
-npm run build
-```
-
-### Kiểm tra mã nguồn
-
-```bash
-npm run lint
-```
-
-### Xem bản build production
-
-```bash
-npm run preview
-```
-
-## Cấu hình backend
-
-Tạo file `backend-node/.env` dựa trên [`backend-node/.env.example`](./backend-node/.env.example), sau đó chạy backend:
-
-```bash
+```powershell
 cd backend-node
 npm install
 npm start
 ```
 
-- SMTP cần được cấu hình để gửi email đặt lại mật khẩu. Liên kết đặt lại hết hạn sau 15 phút.
-- MoMo cần `MOMO_PARTNER_CODE`, `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY`, `MOMO_REDIRECT_URL` và `MOMO_IPN_URL`. Mặc định endpoint dùng môi trường thử nghiệm; IPN phải là URL HTTPS công khai mà MoMo có thể gọi.
-- Chỉ xác nhận thanh toán từ IPN đã kiểm tra chữ ký. Đơn MoMo chưa thanh toán không được chuyển sang xử lý/giao hàng.
-- COD không cần cấu hình cổng thanh toán. Khách hàng có thể hủy đơn đang chờ xác nhận; đơn MoMo đang chờ xử lý thanh toán không thể hủy.
-- Tài khoản khách hàng có thể lưu và quản lý danh sách sản phẩm yêu thích từ trang chi tiết sản phẩm hoặc menu tài khoản.
+Backend mặc định chạy tại `http://localhost:3001`.
 
-## Các chức năng chính
+### 2. Chạy Recommendation Engine
 
-### Trang chủ
+Mở PowerShell mới tại thư mục gốc:
 
-- Hiển thị logo và thương hiệu NovaShop.
-- Hiển thị danh mục sản phẩm:
-  - Điện thoại
-  - Laptop
-  - Máy tính bảng
-  - Tai nghe
-  - Đồng hồ thông minh
-  - Thiết bị gia dụng
-  - Thời trang
-- Hiển thị banner dạng slider.
-- Hiển thị danh sách sản phẩm nổi bật.
-- Hiển thị hình ảnh, tên sản phẩm, giá bán, phần trăm giảm giá, đánh giá và số lượng đã bán.
-- Có nút “Xem thêm” để mở rộng danh sách sản phẩm.
-
-### Tìm kiếm sản phẩm
-
-- Tìm kiếm sản phẩm từ thanh tìm kiếm trên header.
-- Hỗ trợ tìm kiếm theo:
-  - Tên sản phẩm
-  - Danh mục
-  - Thương hiệu
-- Từ khóa được truyền qua query parameter trên URL:
-
-```text
-/products?search=<keyword>
+```powershell
+cd rec-engine-python
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python server.py
 ```
 
-### Danh sách sản phẩm
+Dịch vụ mặc định lắng nghe tại `http://127.0.0.1:8001`. Nó đọc `MONGO_DB` từ `backend-node/.env`; có thể đặt `MONGODB_URI` thay thế hoặc cấu hình `REC_ENGINE_HOST` và `REC_ENGINE_PORT` để đổi địa chỉ. Backend chuyển tiếp yêu cầu đến `REC_ENGINE_URL`, mặc định là `http://localhost:8001`.
 
-- Hiển thị danh sách sản phẩm dưới dạng các thẻ sản phẩm.
-- Hiển thị thông tin:
-  - Hình ảnh
-  - Tên sản phẩm
-  - Đánh giá
-  - Số lượng đã bán
-  - Giá bán
-  - Mức giảm giá
-- Có phân trang.
-- Có khu vực bộ lọc theo:
-  - Danh mục
-  - Checkbox
-  - Số sao đánh giá
-  - Khoảng giá
-- Hỗ trợ hiển thị sản phẩm theo loại thông qua URL:
+### 3. Chạy frontend
 
-```text
-/product/:type
+Mở PowerShell mới tại thư mục gốc:
+
+```powershell
+cd frontend
+npm install
+npm run dev
 ```
 
-Các loại dữ liệu mẫu hiện có:
+Vite mặc định hiển thị địa chỉ phát triển trong terminal (thường là `http://localhost:5173`). Frontend hiện gọi API backend tại `http://localhost:3001`.
 
-```text
-sach
-truyen
+## Cấu hình tích hợp tùy chọn
+
+- **ZaloPay:** điền `ZALOPAY_APP_ID`, `ZALOPAY_KEY1`, `ZALOPAY_KEY2`. Có thể cấu hình thêm `ZALOPAY_ENDPOINT`, `ZALOPAY_REDIRECT_URL` và `ZALOPAY_CALLBACK_URL`. Callback cần trỏ đến backend có thể truy cập từ ZaloPay; endpoint mẫu trong `.env.example` là sandbox.
+- **Đặt lại mật khẩu:** cấu hình `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM`; tùy máy chủ email, cấu hình thêm `SMTP_USER`, `SMTP_PASS` và `SMTP_SECURE`. Liên kết đặt lại mật khẩu hết hạn sau 15 phút.
+- **Ảnh đại diện:** cấu hình `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` và `CLOUDINARY_API_SECRET`.
+
+Các tích hợp này cần được cấu hình riêng; chỉ tạo file `.env` không có nghĩa là dịch vụ bên ngoài đã sẵn sàng.
+
+## Kiểm tra
+
+Build và lint frontend:
+
+```powershell
+cd frontend
+npm run build
+npm run lint
 ```
 
-### Chi tiết sản phẩm
+Chạy các kiểm thử Recommendation Engine:
 
-Trang chi tiết sản phẩm bao gồm:
-
-- Hình ảnh sản phẩm chính.
-- Danh sách hình ảnh thu nhỏ.
-- Tên sản phẩm.
-- Đánh giá sản phẩm.
-- Số lượng đã bán.
-- Giá sản phẩm.
-- Thông tin địa chỉ nhận hàng.
-- Thay đổi số lượng sản phẩm.
-- Nút “Chọn mua”.
-- Nút “Mua trả sau”.
-- Nút tương tác Facebook.
-- Khu vực bình luận Facebook.
-
-### Giỏ hàng
-
-Trang giỏ hàng hỗ trợ:
-
-- Hiển thị danh sách sản phẩm trong giỏ hàng.
-- Hiển thị tên sản phẩm và cửa hàng.
-- Hiển thị hình ảnh sản phẩm.
-- Hiển thị giá sản phẩm.
-- Chọn từng sản phẩm.
-- Chọn tất cả sản phẩm.
-- Tăng hoặc giảm số lượng sản phẩm.
-- Xóa sản phẩm khỏi giỏ hàng.
-- Tính tạm tính theo số lượng.
-- Hiển thị phí vận chuyển miễn phí.
-- Hiển thị tổng tiền.
-- Hiển thị thông tin đã bao gồm VAT.
-- Nút chuyển sang bước mua hàng.
-
-### Thanh toán
-
-Trang thanh toán hỗ trợ:
-
-- Hiển thị phương thức giao hàng tiêu chuẩn.
-- Hiển thị thời gian giao hàng dự kiến từ 2 đến 4 ngày.
-- Thanh toán khi nhận hàng.
-- Thanh toán qua ví MoMo.
-- Hiển thị thông tin đơn hàng.
-- Hiển thị tạm tính, phí vận chuyển và tổng tiền.
-- Thay đổi thông tin giao hàng:
-  - Họ và tên
-  - Số điện thoại
-  - Địa chỉ
-- Hiển thị thông báo cập nhật thông tin giao hàng thành công.
-- Nút đặt hàng.
-
-### Đặt hàng thành công
-
-Sau khi đặt hàng, người dùng được chuyển đến trang xác nhận thành công với các lựa chọn:
-
-- Xem đơn hàng.
-- Tiếp tục mua sắm.
-
-### Quản lý đơn hàng cá nhân
-
-Trang “Đơn hàng của tôi” hỗ trợ:
-
-- Hiển thị danh sách đơn hàng của người dùng.
-- Hiển thị mã đơn hàng.
-- Hiển thị sản phẩm trong đơn hàng.
-- Hiển thị tổng tiền.
-- Hiển thị trạng thái đơn hàng.
-- Mở trang chi tiết đơn hàng.
-- Hủy đơn đang chờ xác nhận nếu chưa thanh toán.
-
-### Chi tiết đơn hàng
-
-Trang chi tiết đơn hàng hiển thị:
-
-- Mã đơn hàng.
-- Tiến trình xử lý đơn hàng:
-  - Đặt hàng
-  - Đang xử lý
-  - Hoàn tất
-- Trạng thái đơn hàng.
-- Người nhận.
-- Địa chỉ giao hàng.
-- Phương thức thanh toán.
-- Trạng thái thanh toán.
-- Danh sách sản phẩm và số lượng.
-- Tổng tiền đơn hàng.
-
-### Khôi phục mật khẩu
-
-- Yêu cầu liên kết khôi phục qua email đã đăng ký.
-- Đặt mật khẩu mới từ liên kết dùng một lần, hết hạn sau 15 phút.
-- Yêu cầu SMTP cấu hình ở backend.
-
-### Sản phẩm yêu thích
-
-- Lưu/xóa sản phẩm yêu thích trên trang chi tiết.
-- Xem và quản lý danh sách yêu thích từ menu tài khoản.
-
-### Tài khoản người dùng
-
-Trang tài khoản người dùng hỗ trợ chỉnh sửa:
-
-- Họ và tên.
-- Email.
-- Số điện thoại.
-- Địa chỉ.
-
-Có nút lưu thay đổi thông tin cá nhân.
-
-### Đăng nhập
-
-Trang đăng nhập bao gồm:
-
-- Nhập email.
-- Nhập mật khẩu.
-- Nút đăng nhập.
-- Liên kết quên mật khẩu.
-- Liên kết chuyển sang trang đăng ký.
-- Khu vực giới thiệu thương hiệu NovaShop.
-
-### Đăng ký
-
-Trang đăng ký bao gồm:
-
-- Nhập email.
-- Nhập mật khẩu.
-- Nhập lại mật khẩu.
-- Nút đăng ký.
-- Liên kết chuyển sang trang đăng nhập.
-- Khu vực giới thiệu thương hiệu NovaShop.
-
-### Trang quản trị
-
-Khu vực quản trị được truy cập tại:
-
-```text
-/system/admin
+```powershell
+cd rec-engine-python
+python -m unittest
 ```
 
-Khu vực quản trị gồm các menu:
+Backend hiện chưa có bộ kiểm thử tự động được cấu hình trong `package.json`.
 
-- Tổng quan
-- Sản phẩm
-- Đơn hàng
-- Khách hàng
-
-### Dashboard quản trị
-
-Trang tổng quan hiển thị:
-
-- Doanh thu tháng.
-- Số lượng đơn hàng mới.
-- Số lượng sản phẩm đang bán.
-- Số lượng khách hàng.
-- Biểu đồ doanh thu trong 7 ngày.
-- Thống kê trạng thái đơn hàng:
-  - Chờ xác nhận
-  - Đang giao
-  - Hoàn tất
-  - Đã hủy
-- Danh sách đơn hàng gần đây.
-
-### Quản lý sản phẩm
-
-Quản trị viên có thể:
-
-- Xem danh sách sản phẩm.
-- Sắp xếp sản phẩm theo tên.
-- Tạo sản phẩm mới.
-- Chỉnh sửa sản phẩm.
-- Xóa sản phẩm.
-- Nhập tên sản phẩm.
-- Chọn loại sản phẩm.
-- Nhập giá bán.
-- Nhập điểm đánh giá.
-- Nhập phần trăm giảm giá.
-- Chọn hình ảnh sản phẩm.
-- Hiển thị thông báo khi tạo, cập nhật hoặc xóa sản phẩm thành công.
-
-Các loại sản phẩm hiện có trong form quản trị:
-
-- Sách
-- Truyện
-
-### Quản lý đơn hàng trong Admin
-
-Quản trị viên có thể xem:
-
-- Tên khách hàng.
-- Số điện thoại.
-- Địa chỉ.
-- Trạng thái thanh toán.
-- Trạng thái giao hàng.
-- Phương thức thanh toán.
-- Tổng tiền đơn hàng.
-
-### Quản lý khách hàng
-
-Quản trị viên có thể:
-
-- Xem danh sách khách hàng.
-- Xem email.
-- Xem địa chỉ.
-- Xem số điện thoại.
-- Kiểm tra quyền quản trị.
-- Chỉnh sửa thông tin khách hàng.
-- Xóa tài khoản khách hàng.
-- Hiển thị thông báo khi cập nhật hoặc xóa khách hàng thành công.
-
-### Trang không tìm thấy
-
-Khi truy cập đường dẫn không tồn tại, hệ thống hiển thị:
-
-- Mã lỗi 404.
-- Thông báo trang không tồn tại hoặc đã được chuyển đi.
-- Nút quay về trang chủ.
-
-## Danh sách route
+## Các route giao diện chính
 
 | Route | Chức năng |
 |---|---|
-| `/` | Trang chủ |
-| `/order` | Giỏ hàng |
+| `/` | Trang chủ, deals và sản phẩm gợi ý |
 | `/products` | Danh sách sản phẩm |
-| `/products/:type` | Danh sách sản phẩm theo loại |
-| `/product-details/:id` | Chi tiết sản phẩm |
-| `/payment` | Thanh toán |
-| `/order-success` | Đặt hàng thành công |
-| `/my-order` | Đơn hàng của tôi |
-| `/favorites` | Sản phẩm yêu thích |
+| `/products/:type` | Danh sách sản phẩm theo danh mục |
+| `/product-details/:id` | Chi tiết sản phẩm và sản phẩm tương tự |
+| `/recommendations` | Danh sách gợi ý |
+| `/order` | Giỏ hàng |
+| `/payment` | Xác nhận giao hàng và thanh toán |
+| `/my-order` | Đơn hàng của khách hàng |
 | `/details-order/:id` | Chi tiết đơn hàng |
-| `/profile-user` | Thông tin tài khoản |
-| `/sign-in` | Đăng nhập |
-| `/sign-up` | Đăng ký |
-| `/forgot-password` | Yêu cầu đặt lại mật khẩu |
-| `/reset-password` | Đặt lại mật khẩu bằng liên kết email |
+| `/favorites` | Sản phẩm yêu thích |
+| `/profile-user` | Hồ sơ người dùng |
+| `/sign-in`, `/sign-up` | Đăng nhập và đăng ký |
+| `/forgot-password`, `/reset-password` | Đặt lại mật khẩu |
 | `/system/admin` | Khu vực quản trị |
-| `*` | Trang 404 |
 
-## Cấu trúc dự án
+## Cấu trúc repository
 
 ```text
 NovaShop/
-├── frontend/
-│   ├── public/
-│   │   ├── favicon.svg
-│   │   └── icons.svg
-│   ├── src/
-│   │   ├── assets/
-│   │   │   └── images/
-│   │   ├── components/
-│   │   │   ├── AdminProduct/
-│   │   │   ├── AdminUser/
-│   │   │   ├── ButtonComponent/
-│   │   │   ├── CardComponent/
-│   │   │   ├── CommentComponent/
-│   │   │   ├── DefaultComponent/
-│   │   │   ├── DrawerComponent/
-│   │   │   ├── HeaderComponent/
-│   │   │   ├── InputComponent/
-│   │   │   ├── InputForm/
-│   │   │   ├── LoadingComponent/
-│   │   │   ├── Message/
-│   │   │   ├── ModalComponent/
-│   │   │   ├── NavbarComponent/
-│   │   │   ├── OrderAdmin/
-│   │   │   ├── ProductDetailsComponent/
-│   │   │   ├── SliderComponent/
-│   │   │   ├── StepComponent/
-│   │   │   ├── TableComponent/
-│   │   │   └── TypeProduct/
-│   │   ├── data/
-│   │   │   └── mockProducts.js
-│   │   ├── pages/
-│   │   │   ├── AdminPage/
-│   │   │   ├── DetailsOrderPage/
-│   │   │   ├── HomePage/
-│   │   │   ├── MyOrderPage/
-│   │   │   ├── NotFoundPage/
-│   │   │   ├── OrderPage/
-│   │   │   ├── OrderSuccessPage/
-│   │   │   ├── PaymentPage/
-│   │   │   ├── ProductDetailsPage/
-│   │   │   ├── ProductsPage/
-│   │   │   ├── ProfilePage/
-│   │   │   ├── SignInPage/
-│   │   │   ├── SignUpPage/
-│   │   │   └── TypeProductPage/
-│   │   ├── redux/
-│   │   │   ├── slices/
-│   │   │   └── store.js
-│   │   ├── routes/
-│   │   │   └── index.js
-│   │   ├── App.jsx
-│   │   ├── index.css
-│   │   └── main.jsx
-│   ├── index.html
-│   ├── package.json
-│   └── vite.config.js
-├── backend-node/
-│   └── package.json
-├── rec-engine-python/
-│   ├── app/
-│   │   └── main.py
-│   ├── requirements.txt
-│   └── train_cron.py
+├── backend-node/       # REST API, MongoDB models, authentication và thanh toán
+├── frontend/           # Giao diện React/Vite
+├── rec-engine-python/  # Recommendation Engine và kiểm thử
 ├── docker-compose.yml
-├── package.json
-├── package-lock.json
-└── README.md
+└── README.md            # Tài liệu dự án duy nhất
 ```
 
-## Dữ liệu hiện tại
+## Nạp dữ liệu đánh giá tham khảo (tùy chọn)
 
-Phiên bản hiện tại sử dụng dữ liệu mẫu ở phía frontend cho:
+`rec-engine-python/import_review_ratings.py` đọc dữ liệu đánh giá Excel, đối chiếu `product_id` với `item_id` trong catalog và sản phẩm MongoDB, rồi báo cáo kết quả ánh xạ. Mặc định script chỉ chạy kiểm tra, không ghi dữ liệu. Chỉ thêm `--apply` khi chủ động muốn ghi các đánh giá ghép được vào collection `datasetratings`.
 
-- Sản phẩm.
-- Người dùng.
-- Đơn hàng.
-- Thống kê dashboard.
-- Thông tin thanh toán.
-- Thông tin tài khoản.
+Ví dụ trong PowerShell từ thư mục gốc:
 
-Các thao tác tạo, sửa và xóa trong khu vực quản trị hiện chỉ cập nhật state trong phiên làm việc trên trình duyệt.
-
-## Trạng thái phát triển
-
-Các giao diện và luồng chính của website đã được xây dựng, bao gồm mua sắm, giỏ hàng, thanh toán, đơn hàng và quản trị.
-
-Thanh toán trực tuyến chưa được tích hợp. Rating sản phẩm có thể gộp từ đánh giá NovaShop và dữ liệu nguồn; mô hình gợi ý cá nhân hóa vẫn cần được huấn luyện và đánh giá riêng.
-
-## Nạp rating tham khảo
-
-`rec-engine-python/import_review_ratings.py` kiểm tra ánh xạ `product_id` trong file đánh giá sang `item_id` trong catalog và collection MongoDB `products`. Script mặc định chỉ chạy dry-run. Để ghi dữ liệu, truyền thêm `--apply`; ratings sẽ được lưu trong collection `datasetratings`, không tạo tài khoản giả trong `users`.
-
-```bash
-pip install -r .\rec-engine-python\requirements.txt
-python .\rec-engine-python\import_review_ratings.py --reviews "D:\Documents\Đồ án chuyên ngành\ReviewClean.xlsx" --products-json .\frontend\src\data\products.json
+```powershell
+python -m pip install -r .\rec-engine-python\requirements.txt
+python .\rec-engine-python\import_review_ratings.py `
+  --reviews "D:\duong-dan\ReviewClean.xlsx" `
+  --products-json .\frontend\src\data\products.json
 ```
 
-Sau khi xem báo cáo ánh xạ, có thể chạy lại với `--apply` để nạp ratings đã ghép được. Script dùng `MONGODB_URI` nếu được cấu hình; nếu không, nó đọc `MONGO_DB` từ `backend-node/.env`. Nên dùng tài khoản MongoDB chỉ có quyền đọc khi dry-run và chỉ cấp quyền ghi khi chủ động nạp dữ liệu.
+Script dùng `MONGODB_URI` nếu được khai báo; nếu không, nó đọc `MONGO_DB` từ `backend-node/.env`. Hãy kiểm tra báo cáo ánh xạ trước khi chạy lại lệnh với `--apply`.
 
-Điểm và số lượt trên website được tổng hợp từ `datasetratings` và đánh giá NovaShop. Vì chưa có ánh xạ giữa `customer_id` của tập dữ liệu với tài khoản NovaShop, đây là tổng lượt đánh giá giữa hai nguồn; không thể khử trùng lặp cùng một người giữa hai nguồn. Bình luận chi tiết chỉ đến từ đánh giá trên NovaShop.
+Điểm và số lượt đánh giá hiển thị có thể tổng hợp từ `datasetratings` và đánh giá do khách hàng gửi trên NovaShop. Do không có ánh xạ giữa `customer_id` của dữ liệu tham khảo và tài khoản NovaShop, hệ thống không thể khử trùng lặp cùng một người giữa hai nguồn.
